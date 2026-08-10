@@ -74,10 +74,10 @@ export const MatchHistory: React.FC<MatchHistoryProps> = ({ matches }) => {
               {/* Clickable Header Row */}
               <div
                 onClick={() => toggleExpand(matchId)}
-                className="p-3.5 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer select-none"
+                className="p-3.5 grid grid-cols-1 md:grid-cols-12 items-center gap-3 md:gap-4 cursor-pointer select-none"
               >
                 {/* Left: Real Champion Icon & Match Meta */}
-                <div className="flex items-center gap-3.5">
+                <div className="md:col-span-4 flex items-center gap-3.5 min-w-0">
                   <div className="relative shrink-0">
                     <div
                       className={`w-14 h-14 rounded-md border-2 overflow-hidden bg-hextech-black relative shadow-lg ${
@@ -101,23 +101,23 @@ export const MatchHistory: React.FC<MatchHistoryProps> = ({ matches }) => {
                     </span>
                   </div>
 
-                  <div>
+                  <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-base text-gray-100 font-cinzel tracking-wide">
+                      <h4 className="font-bold text-base text-gray-100 font-cinzel tracking-wide truncate">
                         {p.championName}
                       </h4>
-                      <span className="text-[11px] px-2 py-0.5 rounded bg-hextech-navy border border-hextech-gold/30 text-hextech-gold font-mono">
+                      <span className="text-[11px] px-2 py-0.5 rounded bg-hextech-navy border border-hextech-gold/30 text-hextech-gold font-mono shrink-0">
                         {p.teamPosition}
                       </span>
                     </div>
 
                     <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
-                      <span className="flex items-center gap-1 font-mono text-gray-300">
+                      <span className="flex items-center gap-1 font-mono text-gray-300 shrink-0">
                         <Clock className="w-3.5 h-3.5 text-hextech-cyan" />
                         {durationMin}m {durationSec}s
                       </span>
                       {m.timelineHighlights?.csAt10 !== undefined && (
-                        <span className="text-xs text-amber-300">
+                        <span className="text-xs text-amber-300 truncate">
                           CS@10m: <strong className="text-amber-100 font-mono">{m.timelineHighlights.csAt10}</strong>
                         </span>
                       )}
@@ -126,7 +126,7 @@ export const MatchHistory: React.FC<MatchHistoryProps> = ({ matches }) => {
                 </div>
 
                 {/* Center: Main Stats Breakdown */}
-                <div className="grid grid-cols-3 gap-3 md:gap-6 text-center border-t md:border-t-0 md:border-l border-hextech-gold/15 pt-2 md:pt-0 md:pl-4">
+                <div className="md:col-span-5 grid grid-cols-3 gap-2 md:gap-4 text-center border-t md:border-t-0 md:border-l border-hextech-gold/15 pt-2 md:pt-0 md:pl-4">
                   <div>
                     <span className="text-[10px] uppercase text-gray-400 font-cinzel block">K / D / A</span>
                     <span className="text-xs md:text-sm font-bold text-gray-100 font-mono">
@@ -159,12 +159,12 @@ export const MatchHistory: React.FC<MatchHistoryProps> = ({ matches }) => {
                 </div>
 
                 {/* Right: Direct Matchup Rival & Toggle Chevron */}
-                <div className="flex items-center gap-3 border-t md:border-t-0 border-hextech-gold/15 pt-2 md:pt-0 justify-between md:justify-end">
+                <div className="md:col-span-3 flex items-center gap-3 border-t md:border-t-0 border-hextech-gold/15 pt-2 md:pt-0 justify-between md:justify-end min-w-0">
                   {opp && (
-                    <div className="flex items-center gap-2 text-right">
-                      <div>
+                    <div className="flex items-center gap-2 text-right min-w-0">
+                      <div className="min-w-0">
                         <span className="text-[10px] uppercase text-gray-400 font-cinzel block">Rival Directo</span>
-                        <span className="text-xs font-bold text-gray-200 font-cinzel">
+                        <span className="text-xs font-bold text-gray-200 font-cinzel truncate block">
                           vs {opp.championName}
                         </span>
                         <span className="text-[10px] text-gray-400 font-mono block">
