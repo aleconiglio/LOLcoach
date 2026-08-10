@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #010a13;
+    color: #f0e6d2;
+    font-family: 'Inter', sans-serif;
+    background-image: 
+      radial-gradient(circle at 50% 0%, rgba(14, 31, 64, 0.6) 0%, transparent 75%),
+      radial-gradient(circle at 100% 100%, rgba(200, 170, 110, 0.05) 0%, transparent 50%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-cinzel {
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.05em;
+  }
+}
+
+/* Custom League Hextech Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #091428;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e2d42;
+  border: 1px solid #785a28;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #c8aa6e;
+}
+
+/* Hextech Gold & Blue UI Utilities */
+.hextech-card {
+  background: linear-gradient(180deg, rgba(14, 23, 44, 0.85) 0%, rgba(9, 20, 40, 0.95) 100%);
+  border: 1px solid rgba(200, 170, 110, 0.25);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+}
+
+.hextech-card:hover {
+  border-color: rgba(200, 170, 110, 0.5);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6), 0 0 15px rgba(200, 170, 110, 0.15);
+}
+
+.hextech-button {
+  background: linear-gradient(180deg, #c8aa6e 0%, #785a28 100%);
+  color: #010a13;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  border: 1px solid #f0e6d2;
+  text-transform: uppercase;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 4px 14px rgba(200, 170, 110, 0.3);
+}
+
+.hextech-button:hover {
+  background: linear-gradient(180deg, #f0e6d2 0%, #c8aa6e 100%);
+  box-shadow: 0 0 20px rgba(200, 170, 110, 0.6);
+  transform: translateY(-1px);
+}
+
+.hextech-button:active {
+  transform: translateY(0);
+}
+
+.hextech-input {
+  background-color: rgba(10, 20, 40, 0.8);
+  border: 1px solid rgba(200, 170, 110, 0.3);
+  color: #f0e6d2;
+  transition: all 0.2s ease;
+}
+
+.hextech-input:focus {
+  outline: none;
+  border-color: #c8aa6e;
+  box-shadow: 0 0 10px rgba(200, 170, 110, 0.3);
+}
+
+.hextech-glow-text {
+  text-shadow: 0 0 10px rgba(200, 170, 110, 0.5);
+}
+
+/* Animations */
+@keyframes hextechPulse {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+.animate-hextech-pulse {
+  animation: hextechPulse 3s infinite ease-in-out;
+}
