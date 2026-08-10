@@ -2,8 +2,56 @@ import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import path from 'path';
 import fs from 'fs';
+import http from 'http';
 
 let mainWindow: BrowserWindow | null = null;
+
+const MIME_TYPES: Record<string, string> = {
+  '.html': 'text/html',
+  '.js': 'text/javascript',
+  '.css': 'text/css',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
+};
+
+function startLocalServer(distPath: string): Promise<number> {
+  return new Promise((resolve) => {
+    const server = http.createServer((req, res) => {
+      let reqPath = req.url || '/';
+      if (reqPath.includes('?')) reqPath = reqPath.split('?')[0];
+
+      let filePath = path.join(distPath, reqPath === '/' ? 'index.html' : reqPath);
+
+      if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+        filePath = path.join(distPath, 'index.html');
+      }
+
+      const ext = path.extname(filePath).toLowerCase();
+      const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+
+      fs.readFile(filePath, (err, data) => {
+        if (err) {
+          res.writeHead(500);
+          res.end('Server Error');
+        } else {
+          res.writeHead(200, { 'Content-Type': contentType });
+          res.end(data);
+        }
+      });
+    });
+
+    server.listen(0, '127.0.0.1', () => {
+      const address = server.address() as any;
+      resolve(address.port);
+    });
+  });
+}
 
 const getSettingsFilePath = () => path.join(app.getPath('userData'), 'settings.json');
 const getEnvFilePath = () => path.join(process.cwd(), '.env');
@@ -62,7 +110,7 @@ autoUpdater.on('update-downloaded', (info) => {
   });
 });
 
-function createWindow() {
+async function createWindow() {
   const isDev = !app.isPackaged && process.env.NODE_ENV === 'development';
 
   mainWindow = new BrowserWindow({
@@ -89,13 +137,20 @@ function createWindow() {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   } else {
-    const primaryPath = path.join(__dirname, '../dist/index.html');
-    const appPath = path.join(app.getAppPath(), 'dist', 'index.html');
-    const finalPath = fs.existsSync(primaryPath) ? primaryPath : appPath;
+    try {
+      const primaryDist = path.join(__dirname, '../dist');
+      const appDist = path.join(app.getAppPath(), 'dist');
+      const distFolder = fs.existsSync(primaryDist) ? primaryDist : appDist;
 
-    mainWindow.loadFile(finalPath).catch((err) => {
-      console.error('Failed to load index.html:', err);
-    });
+      const port = await startLocalServer(distFolder);
+      await mainWindow.loadURL(`http://127.0.0.1:${port}`);
+    } catch (err) {
+      console.error('Error starting production local server:', err);
+      const primaryPath = path.join(__dirname, '../dist/index.html');
+      const appPath = path.join(app.getAppPath(), 'dist', 'index.html');
+      const finalPath = fs.existsSync(primaryPath) ? primaryPath : appPath;
+      mainWindow.loadFile(finalPath);
+    }
   }
 
   mainWindow.once('ready-to-show', () => {

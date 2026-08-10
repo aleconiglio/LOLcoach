@@ -11,18 +11,8 @@
     "dist-electron/**/*"
   ],
   "asar": true,
-  "artifactName": "LOL AI Coach v${version}.${ext}",
   "forceCodeSigning": false,
-  "publish": [
-    {
-      "provider": "github",
-      "owner": "aleconiglio",
-      "repo": "LOLcoach",
-      "releaseType": "release"
-    }
-  ],
   "win": {
-    "target": ["dir"],
-    "verifyUpdateCodeSignature": false
+    "target": ["dir"]
   }
 }
