@@ -22,23 +22,11 @@
     }
   ],
   "win": {
-    "target": [
-      {
-        "target": "portable",
-        "arch": ["x64"]
-      },
-      {
-        "target": "nsis",
-        "arch": ["x64"]
-      }
-    ],
+    "target": ["portable"],
     "verifyUpdateCodeSignature": false
   },
-  "nsis": {
-    "oneClick": true,
-    "perMachine": false,
-    "allowToChangeInstallationDirectory": false,
-    "deleteAppDataOnUninstall": false,
-    "runAfterFinish": true
+  "portable": {
+    "artifactName": "LOL AI Coach v${version}.${ext}",
+    "requestExecutionLevel": "user"
   }
 }
