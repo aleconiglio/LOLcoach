@@ -212,12 +212,17 @@ export const getChampionIconUrl = (championName: string): string => {
     missfortune: 'MissFortune',
     twistedfate: 'TwistedFate',
     xinzhao: 'XinZhao',
+    ambessa: 'Ambessa',
+    aurora: 'Aurora',
+    smolder: 'Smolder',
+    hwei: 'Hwei',
+    naafiri: 'Naafiri',
   };
 
   const lowerKey = key.toLowerCase();
   if (specialMap[lowerKey]) {
     key = specialMap[lowerKey];
-  } else {
+  } else if (key.length > 0) {
     // Capitalize first letter
     key = key.charAt(0).toUpperCase() + key.slice(1);
   }
@@ -226,21 +231,16 @@ export const getChampionIconUrl = (championName: string): string => {
 };
 
 /**
- * Secondary fallback champion icon URL from Community Dragon CDN
+ * Secondary fallback champion icon URL with cache buster
  */
 export const getChampionFallbackIconUrl = (championName: string): string => {
-  if (!championName) return '';
-  const found = LOL_CHAMPIONS.find(
-    (c) =>
-      c.name.toLowerCase() === championName.toLowerCase() ||
-      c.id.toLowerCase() === championName.toLowerCase()
-  );
-  let key = found ? found.id : championName.replace(/[^a-zA-Z0-9]/g, '');
-  return `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/${key}.png`;
+  const primary = getChampionIconUrl(championName);
+  if (!primary) return '';
+  return `${primary}?t=${Date.now()}`;
 };
 
 /**
- * Robust image error handler that tries CommunityDragon fallback before hiding
+ * Robust image error handler
  */
 export const handleChampionImageError = (
   e: React.SyntheticEvent<HTMLImageElement, Event>,
@@ -251,7 +251,8 @@ export const handleChampionImageError = (
     target.dataset.triedFallback = 'true';
     target.src = getChampionFallbackIconUrl(championName);
   } else {
-    target.style.display = 'none';
+    // Elegant fallback SVG icon placeholder if network fails completely
+    target.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="%23c8aa6e" stroke-width="1.5"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/><circle cx="9" cy="9" r="2"/></svg>';
   }
 };
 

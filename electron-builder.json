@@ -11,6 +11,7 @@
     "dist-electron/**/*"
   ],
   "asar": true,
+  "forceCodeSigning": false,
   "publish": [
     {
       "provider": "github",
@@ -19,7 +20,8 @@
     }
   ],
   "win": {
-    "target": ["nsis", "dir"]
+    "target": ["nsis", "dir"],
+    "verifyUpdateCodeSignature": false
   },
   "nsis": {
     "oneClick": false,
