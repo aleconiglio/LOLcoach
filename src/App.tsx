@@ -6,7 +6,7 @@ import { BenchmarkCard } from './components/BenchmarkCard';
 import { MatchHistory } from './components/MatchHistory';
 import { AnalysisReport } from './components/AnalysisReport';
 import { LoadingOverlay } from './components/LoadingOverlay';
-import { UpdateNotifier } from './components/UpdateNotifier';
+import { UpdateModal } from './components/UpdateModal';
 
 import { 
   SearchFormData, 
@@ -203,8 +203,8 @@ export const App: React.FC = () => {
       {/* Loading Overlay */}
       {isLoading && <LoadingOverlay statusText={loadingStatus} />}
 
-      {/* Auto-Update Floating Notifier Banner */}
-      <UpdateNotifier />
+      {/* Auto-Update Modal */}
+      <UpdateModal />
 
     </div>
   );

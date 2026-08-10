@@ -54,7 +54,6 @@ function startLocalServer(distPath: string): Promise<number> {
 }
 
 const getSettingsFilePath = () => path.join(app.getPath('userData'), 'settings.json');
-const getEnvFilePath = () => path.join(process.cwd(), '.env');
 
 // Configure Auto-Updater
 autoUpdater.autoDownload = true;
@@ -89,7 +88,7 @@ autoUpdater.on('update-not-available', (info) => {
 autoUpdater.on('error', (err) => {
   sendUpdaterStatus({
     status: 'error',
-    error: err?.message || 'Error desconocido en el auto-updater',
+    error: err?.message || 'Error en auto-updater',
   });
 });
 
@@ -130,7 +129,6 @@ async function createWindow() {
     },
   });
 
-  // Remove default menu bar for clean native client look
   mainWindow.setMenu(null);
 
   if (isDev) {
@@ -157,22 +155,9 @@ async function createWindow() {
     if (mainWindow) {
       mainWindow.show();
       mainWindow.focus();
-      mainWindow.setAlwaysOnTop(true);
-      setTimeout(() => mainWindow?.setAlwaysOnTop(false), 800);
     }
   });
 
-  // Force show window after 1.2s timeout in case ready-to-show is delayed
-  setTimeout(() => {
-    if (mainWindow) {
-      mainWindow.show();
-      mainWindow.focus();
-      mainWindow.setAlwaysOnTop(true);
-      setTimeout(() => mainWindow?.setAlwaysOnTop(false), 800);
-    }
-  }, 1200);
-
-  // Open external links in default web browser safely
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('http://') || url.startsWith('https://')) {
       shell.openExternal(url);
@@ -183,39 +168,32 @@ async function createWindow() {
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
+
+  // Check for updates 3 seconds after startup if packaged
+  if (app.isPackaged) {
+    setTimeout(() => {
+      autoUpdater.checkForUpdates().catch((err) => {
+        console.log('AutoUpdater initial check:', err.message);
+      });
+    }, 3000);
+  }
 }
 
-app.whenReady().then(() => {
-  createWindow();
+// IPC Handlers
+ipcMain.handle('updater:version', () => app.getVersion());
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
-});
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
+ipcMain.handle('updater:check', async () => {
+  try {
+    return await autoUpdater.checkForUpdates();
+  } catch (err: any) {
+    return { error: err.message };
   }
 });
 
-// IPC Handler for version check
-ipcMain.handle('app:get-version', () => app.getVersion());
-
-// IPC Handlers for Auto-Updater
-ipcMain.handle('updater:check', () => {
-  return autoUpdater.checkForUpdates().catch((err) => {
-    sendUpdaterStatus({ status: 'error', error: err.message });
-  });
-});
-
 ipcMain.handle('updater:quit-and-install', () => {
-  autoUpdater.quitAndInstall(false, true);
+  autoUpdater.quitAndInstall();
 });
 
-// IPC Handlers for Persistent Settings
 ipcMain.handle('settings:get', () => {
   try {
     const filePath = getSettingsFilePath();
@@ -223,8 +201,8 @@ ipcMain.handle('settings:get', () => {
       const data = fs.readFileSync(filePath, 'utf-8');
       return JSON.parse(data);
     }
-  } catch (err) {
-    console.error('Failed to read settings file:', err);
+  } catch (e) {
+    console.error('Error reading settings file:', e);
   }
   return null;
 });
@@ -232,23 +210,28 @@ ipcMain.handle('settings:get', () => {
 ipcMain.handle('settings:save', (_event, settings) => {
   try {
     const filePath = getSettingsFilePath();
-    const existing = fs.existsSync(filePath) ? JSON.parse(fs.readFileSync(filePath, 'utf-8')) : {};
-    const updated = { ...existing, ...settings };
-    fs.writeFileSync(filePath, JSON.stringify(updated, null, 2), 'utf-8');
-
-    // Also persist to root .env file for Vite fallback
-    try {
-      const envPath = getEnvFilePath();
-      const envContent = `VITE_RIOT_API_KEY=${updated.riotApiKey || ''}\nVITE_GROQ_API_KEY=${updated.groqApiKey || ''}\n`;
-      fs.writeFileSync(envPath, envContent, 'utf-8');
-    } catch (e) {
-      // Ignore env write error if permission denied
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
     }
-
-    return updated;
-  } catch (err) {
-    console.error('Failed to save settings file:', err);
+    fs.writeFileSync(filePath, JSON.stringify(settings, null, 2), 'utf-8');
+    return settings;
+  } catch (e) {
+    console.error('Error saving settings file:', e);
     return null;
   }
 });
 
+app.whenReady().then(createWindow);
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+
+app.on('activate', () => {
+  if (mainWindow === null) {
+    createWindow();
+  }
+});
