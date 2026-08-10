@@ -12,10 +12,6 @@ const getEnvFilePath = () => path.join(process.cwd(), '.env');
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 
-if (process.env.NODE_ENV === 'development') {
-  autoUpdater.forceDevUpdateConfig = true;
-}
-
 // Helper to send status to React frontend
 function sendUpdaterStatus(data: any) {
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -96,15 +92,23 @@ function createWindow() {
   }
 
   mainWindow.once('ready-to-show', () => {
-    mainWindow?.show();
-
-    // Check for updates automatically 3 seconds after startup
-    setTimeout(() => {
-      autoUpdater.checkForUpdates().catch((err) => {
-        console.log('AutoUpdater initial check:', err.message);
-      });
-    }, 3000);
+    if (mainWindow) {
+      mainWindow.show();
+      mainWindow.focus();
+      mainWindow.setAlwaysOnTop(true);
+      setTimeout(() => mainWindow?.setAlwaysOnTop(false), 800);
+    }
   });
+
+  // Force show window after 1.2s timeout in case ready-to-show is delayed
+  setTimeout(() => {
+    if (mainWindow) {
+      mainWindow.show();
+      mainWindow.focus();
+      mainWindow.setAlwaysOnTop(true);
+      setTimeout(() => mainWindow?.setAlwaysOnTop(false), 800);
+    }
+  }, 1200);
 
   // Open external links in default web browser safely
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {

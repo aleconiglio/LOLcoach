@@ -1,9 +1,9 @@
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   "appId": "com.lolcoach.aidesktop",
-  "productName": "League of Legends AI Coach",
+  "productName": "LOL AI Coach",
   "directories": {
-    "output": "release/${version}",
+    "output": "release",
     "buildResources": "build"
   },
   "files": [
@@ -21,7 +21,16 @@
     }
   ],
   "win": {
-    "target": ["nsis", "dir"],
+    "target": [
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      },
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      }
+    ],
     "verifyUpdateCodeSignature": false
   },
   "nsis": {
