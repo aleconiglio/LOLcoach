@@ -12,6 +12,10 @@ const getEnvFilePath = () => path.join(process.cwd(), '.env');
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 
+if (process.env.NODE_ENV === 'development') {
+  autoUpdater.forceDevUpdateConfig = true;
+}
+
 // Helper to send status to React frontend
 function sendUpdaterStatus(data: any) {
   if (mainWindow && !mainWindow.isDestroyed()) {

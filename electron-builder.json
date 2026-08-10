@@ -16,7 +16,8 @@
     {
       "provider": "github",
       "owner": "aleconiglio",
-      "repo": "LOLcoach"
+      "repo": "LOLcoach",
+      "releaseType": "release"
     }
   ],
   "win": {
