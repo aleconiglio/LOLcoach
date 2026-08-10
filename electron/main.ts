@@ -63,7 +63,7 @@ autoUpdater.on('update-downloaded', (info) => {
 });
 
 function createWindow() {
-  const isDev = process.env.NODE_ENV === 'development';
+  const isDev = !app.isPackaged && process.env.NODE_ENV === 'development';
 
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -88,7 +88,10 @@ function createWindow() {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    const indexPath = path.join(app.getAppPath(), 'dist', 'index.html');
+    mainWindow.loadFile(indexPath).catch((err) => {
+      console.error('Failed to load index.html:', err);
+    });
   }
 
   mainWindow.once('ready-to-show', () => {

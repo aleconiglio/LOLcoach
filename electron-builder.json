@@ -11,6 +11,7 @@
     "dist-electron/**/*"
   ],
   "asar": true,
+  "artifactName": "LOL AI Coach v${version}.${ext}",
   "forceCodeSigning": false,
   "publish": [
     {
