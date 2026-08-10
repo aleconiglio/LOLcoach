@@ -22,11 +22,7 @@
     }
   ],
   "win": {
-    "target": ["portable"],
+    "target": ["dir"],
     "verifyUpdateCodeSignature": false
-  },
-  "portable": {
-    "artifactName": "LOL AI Coach v${version}.${ext}",
-    "requestExecutionLevel": "user"
   }
 }

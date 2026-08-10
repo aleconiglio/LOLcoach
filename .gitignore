@@ -8,6 +8,8 @@ dist-electron
 release
 out
 build
+*.exe
+LOL AI Coach v*
 
 # Environment variables & secrets
 .env
