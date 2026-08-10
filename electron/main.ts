@@ -78,6 +78,7 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: false,
+      webSecurity: false,
     },
   });
 
@@ -88,8 +89,11 @@ function createWindow() {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   } else {
-    const indexPath = path.join(app.getAppPath(), 'dist', 'index.html');
-    mainWindow.loadFile(indexPath).catch((err) => {
+    const primaryPath = path.join(__dirname, '../dist/index.html');
+    const appPath = path.join(app.getAppPath(), 'dist', 'index.html');
+    const finalPath = fs.existsSync(primaryPath) ? primaryPath : appPath;
+
+    mainWindow.loadFile(finalPath).catch((err) => {
       console.error('Failed to load index.html:', err);
     });
   }
