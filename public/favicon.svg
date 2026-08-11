@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Hextech Gold Metallic Gradients -->
+    <linearGradient id="goldOuter" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF0D0" />
+      <stop offset="35%" stop-color="#E5C158" />
+      <stop offset="70%" stop-color="#997028" />
+      <stop offset="100%" stop-color="#F0D478" />
+    </linearGradient>
+
+    <linearGradient id="goldInner" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#5C4517" />
+      <stop offset="50%" stop-color="#D9B24C" />
+      <stop offset="100%" stop-color="#FFF0D0" />
+    </linearGradient>
+
+    <!-- Hextech Cyan Arcane Gradients -->
+    <radialGradient id="hexGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00F0FF" stop-opacity="0.9" />
+      <stop offset="45%" stop-color="#00A3FF" stop-opacity="0.6" />
+      <stop offset="85%" stop-color="#05A6F0" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#00F0FF" stop-opacity="0" />
+    </radialGradient>
+
+    <linearGradient id="gemFacetLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E0FFFF" />
+      <stop offset="40%" stop-color="#00F0FF" />
+      <stop offset="100%" stop-color="#006699" />
+    </linearGradient>
+
+    <linearGradient id="gemFacetDark" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#00A3FF" />
+      <stop offset="60%" stop-color="#004466" />
+      <stop offset="100%" stop-color="#022035" />
+    </linearGradient>
+
+    <!-- Arcane Glow Filter -->
+    <filter id="neonGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Arcane Radial Core Glow (Transparent Outer Edge) -->
+  <circle cx="256" cy="256" r="190" fill="url(#hexGlow)" />
+
+  <!-- Outer Hextech Gold Crest Border (Transparent Interior & Exterior) -->
+  <polygon points="256,20 446,115 446,397 256,492 66,397 66,115" fill="none" stroke="url(#goldOuter)" stroke-width="16" stroke-linejoin="round" />
+
+  <!-- Gold Geometric Frame Lines -->
+  <polygon points="256,76 396,156 396,356 256,436 116,356 116,156" fill="none" stroke="url(#goldInner)" stroke-width="8" stroke-linejoin="round" />
+
+  <!-- Hextech Crystal Gemstone Facets -->
+  <!-- Top Center Facet -->
+  <polygon points="256,130 326,205 256,240 186,205" fill="url(#gemFacetLight)" filter="url(#neonGlow)" />
+
+  <!-- Left Facet -->
+  <polygon points="186,205 256,240 256,345 156,275" fill="url(#gemFacetDark)" />
+
+  <!-- Right Facet -->
+  <polygon points="326,205 356,275 256,345 256,240" fill="url(#gemFacetLight)" />
+
+  <!-- Bottom Core Facet -->
+  <polygon points="256,345 356,275 256,382 156,275" fill="url(#gemFacetDark)" />
+
+  <!-- Central Arcane Core Diamond -->
+  <polygon points="256,190 294,256 256,322 218,256" fill="#E0FFFF" filter="url(#neonGlow)" />
+
+  <!-- Decorative Hextech Corner Connector Lines -->
+  <line x1="256" y1="20" x2="256" y2="76" stroke="url(#goldOuter)" stroke-width="8" stroke-linecap="round"/>
+  <line x1="256" y1="436" x2="256" y2="492" stroke="url(#goldOuter)" stroke-width="8" stroke-linecap="round"/>
+  <line x1="66" y1="115" x2="116" y2="156" stroke="url(#goldOuter)" stroke-width="8" stroke-linecap="round"/>
+  <line x1="446" y1="115" x2="396" y2="156" stroke="url(#goldOuter)" stroke-width="8" stroke-linecap="round"/>
+  <line x1="66" y1="397" x2="116" y2="356" stroke="url(#goldOuter)" stroke-width="8" stroke-linecap="round"/>
+  <line x1="446" y1="397" x2="396" y2="356" stroke="url(#goldOuter)" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Glowing Accent Nodes -->
+  <circle cx="256" cy="130" r="7" fill="#00F0FF" filter="url(#neonGlow)"/>
+  <circle cx="326" cy="205" r="6" fill="#00F0FF" filter="url(#neonGlow)"/>
+  <circle cx="186" cy="205" r="6" fill="#00F0FF" filter="url(#neonGlow)"/>
+  <circle cx="256" cy="382" r="7" fill="#00F0FF" filter="url(#neonGlow)"/>
+</svg>

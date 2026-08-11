@@ -6,7 +6,6 @@ import { BenchmarkCard } from './components/BenchmarkCard';
 import { MatchHistory } from './components/MatchHistory';
 import { AnalysisReport } from './components/AnalysisReport';
 import { LoadingOverlay } from './components/LoadingOverlay';
-import { UpdateModal } from './components/UpdateModal';
 
 import { 
   SearchFormData, 
@@ -14,7 +13,7 @@ import {
   MatchDetail, 
   AIAnalysisReport 
 } from './types';
-import { getStoredSettings, saveStoredSettings, loadPersistentSettings } from './services/storage';
+import { getStoredSettings, saveStoredSettings } from './services/storage';
 import { fetchFullSummonerAnalysis } from './services/riotApi';
 import { generateGroqCoachAnalysis } from './services/groqCoach';
 import { getMockMatches, getMockAIReport } from './services/mockData';
@@ -23,13 +22,6 @@ import { AlertCircle, Sparkles, RefreshCw, CheckCircle2 } from 'lucide-react';
 export const App: React.FC = () => {
   const [settings, setSettings] = useState<AppSettings>(getStoredSettings());
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
-  // Load persistent Electron settings on mount
-  useEffect(() => {
-    loadPersistentSettings().then((loaded) => {
-      setSettings(loaded);
-    });
-  }, []);
 
   const [formData, setFormData] = useState<SearchFormData>({
     gameName: '',
@@ -202,9 +194,6 @@ export const App: React.FC = () => {
 
       {/* Loading Overlay */}
       {isLoading && <LoadingOverlay statusText={loadingStatus} />}
-
-      {/* Auto-Update Modal */}
-      <UpdateModal />
 
     </div>
   );
