@@ -17,7 +17,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const [riotKey, setRiotKey] = useState(settings.riotApiKey);
   const [groqKey, setGroqKey] = useState(settings.groqApiKey);
-  const [groqModel, setGroqModel] = useState(settings.groqModel || 'llama-3.1-70b-versatile');
   const [isDemoMode, setIsDemoMode] = useState(settings.isDemoMode);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
@@ -28,7 +27,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     onSave({
       riotApiKey: riotKey,
       groqApiKey: groqKey,
-      groqModel: groqModel.trim() || 'llama-3.1-70b-versatile',
       isDemoMode,
     });
     setSavedSuccess(true);
@@ -37,14 +35,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       onClose();
     }, 800);
   };
-
-  const MODEL_OPTIONS = [
-    { id: 'llama-3.1-70b-versatile', label: 'Llama 3.1 70B Versatile (Predeterminado)' },
-    { id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B Instant (Modelo Fallback / Rápido)' },
-    { id: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B Versatile' },
-    { id: 'deepseek-r1-distill-llama-70b', label: 'DeepSeek R1 Distill Llama 70B (Razonamiento)' },
-    { id: 'mixtral-8x7b-32768', label: 'Mixtral 8x7B (32k Context)' },
-  ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
@@ -123,43 +113,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               >
                 console.groq.com
               </a>
-            </p>
-          </div>
-
-          {/* Groq LLM Model Selector */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-hextech-gold flex items-center gap-1.5 font-cinzel">
-              <Sparkles className="w-4 h-4 text-hextech-cyan" />
-              Modelo LLM de Groq
-            </label>
-            <select
-              value={MODEL_OPTIONS.some((m) => m.id === groqModel) ? groqModel : 'custom'}
-              onChange={(e) => {
-                if (e.target.value !== 'custom') {
-                  setGroqModel(e.target.value);
-                }
-              }}
-              className="w-full px-3 py-2 text-sm bg-hextech-black/80 border border-hextech-gold/30 rounded focus:border-hextech-gold text-gray-100 focus:outline-none transition-all font-sans cursor-pointer"
-            >
-              {MODEL_OPTIONS.map((opt) => (
-                <option key={opt.id} value={opt.id}>
-                  {opt.label} ({opt.id})
-                </option>
-              ))}
-              <option value="custom">Otro modelo personalizado...</option>
-            </select>
-
-            {(!MODEL_OPTIONS.some((m) => m.id === groqModel) || groqModel === 'custom') && (
-              <input
-                type="text"
-                value={groqModel === 'custom' ? '' : groqModel}
-                onChange={(e) => setGroqModel(e.target.value)}
-                placeholder="Ej: llama-3.1-70b-versatile"
-                className="w-full mt-1.5 px-3 py-2 text-sm bg-hextech-black/80 border border-hextech-gold/30 rounded focus:border-hextech-gold text-gray-100 placeholder-gray-600 focus:outline-none transition-all font-mono"
-              />
-            )}
-            <p className="text-[11px] text-gray-400">
-              Modelos soportados en la API de Groq Cloud (ej: <code className="text-hextech-gold-light">llama-3.1-70b-versatile</code>).
             </p>
           </div>
 

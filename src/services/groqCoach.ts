@@ -42,52 +42,15 @@ REGLAS DE ANÁLISIS:
 3. Genera un Plan de Acción Inmediato con 3 objetivos CONCRETOS y 100% aplicables en la siguiente partida.
 4. Redacta todo en español neutro, técnico y motivador.`;
 
-export const DEFAULT_GROQ_MODELS = [
-  'llama-3.1-70b-versatile',
-  'llama-3.1-8b-instant',
-  'llama-3.3-70b-versatile',
-  'llama3-70b-8192',
-  'deepseek-r1-distill-llama-70b',
-  'mixtral-8x7b-32768',
-];
-
-export const fetchAvailableGroqModels = async (groqApiKey: string): Promise<string[]> => {
-  if (!groqApiKey || groqApiKey.trim() === '') return DEFAULT_GROQ_MODELS;
-  try {
-    const res = await fetch('https://api.groq.com/openai/v1/models', {
-      headers: {
-        'Authorization': `Bearer ${groqApiKey.trim()}`,
-      },
-    });
-    if (!res.ok) return DEFAULT_GROQ_MODELS;
-    const data = await res.json();
-    const activeModels = (data.data || [])
-      .map((m: any) => m.id)
-      .filter((id: string) => !id.includes('whisper') && !id.includes('guard') && !id.includes('vision') && !id.includes('embed'));
-    return activeModels.length > 0 ? activeModels : DEFAULT_GROQ_MODELS;
-  } catch (err) {
-    console.warn('No se pudieron obtener los modelos de la API de Groq:', err);
-    return DEFAULT_GROQ_MODELS;
-  }
-};
+export const GROQ_MODEL = 'llama-3.3-70b-versatile';
 
 export const generateGroqCoachAnalysis = async (
   matches: MatchDetail[],
   targetRank: TargetRank,
-  groqApiKey: string,
-  groqModel?: string
+  groqApiKey: string
 ): Promise<AIAnalysisReport> => {
   if (!groqApiKey || groqApiKey.trim() === '') {
     throw new Error('Groq API Key no configurada. Ingrésala en el panel de Configuración de la aplicación.');
-  }
-
-  const primaryModel = groqModel && groqModel.trim() !== '' ? groqModel.trim() : 'llama-3.1-70b-versatile';
-  const fallbackModel = 'llama-3.1-8b-instant';
-
-  // Construct retry model order: primary model first, fallback model second if different
-  const candidateModels = [primaryModel];
-  if (primaryModel !== fallbackModel) {
-    candidateModels.push(fallbackModel);
   }
 
   const benchmark = getBenchmarkForRank(targetRank);
@@ -156,70 +119,49 @@ export const generateGroqCoachAnalysis = async (
     matchesDetail: matchSummaries,
   };
 
-  let lastErrorMessage = '';
+  try {
+    console.log(`Llamando a Groq API (https://api.groq.com/openai/v1/chat/completions) con modelo: ${GROQ_MODEL}...`);
 
-  for (const currentModel of candidateModels) {
-    try {
-      console.log(`Llamando a Groq API (https://api.groq.com/openai/v1/chat/completions) con modelo: ${currentModel}...`);
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${groqApiKey.trim()}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          {
+            role: 'user',
+            content: `Realiza el diagnóstico de coaching para el siguiente perfil de partidas de League of Legends:\n\n${JSON.stringify(
+              userPromptPayload,
+              null,
+              2
+            )}`,
+          },
+        ],
+        model: GROQ_MODEL,
+        temperature: 0.3,
+        response_format: { type: 'json_object' },
+      }),
+    });
 
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${groqApiKey.trim()}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
-            {
-              role: 'user',
-              content: `Realiza el diagnóstico de coaching para el siguiente perfil de partidas de League of Legends:\n\n${JSON.stringify(
-                userPromptPayload,
-                null,
-                2
-              )}`,
-            },
-          ],
-          model: currentModel,
-          temperature: 0.3,
-          response_format: { type: 'json_object' },
-        }),
-      });
-
-      if (response.status === 401) {
-        throw new Error('Fallo de autenticación con la API de Groq. Por favor verifica que tu Groq API Key sea válida.');
-      }
-
-      if (!response.ok) {
-        const errorJson = await response.json().catch(() => ({}));
-        const message = errorJson?.error?.message || `Error HTTP ${response.status}`;
-
-        // 400 (decommissioned), 404 (not found), 429 (rate limit): retry with fallback model
-        if (response.status === 400 || response.status === 404 || response.status === 429) {
-          console.warn(
-            `El modelo ${currentModel} devolvió error HTTP ${response.status} (${message}). Reintentando con modelo fallback: ${fallbackModel}...`
-          );
-          lastErrorMessage = message;
-          continue;
-        }
-
-        throw new Error(message);
-      }
-
-      const jsonResponse = await response.json();
-      const responseContent = jsonResponse.choices?.[0]?.message?.content || '';
-      const parsedReport: AIAnalysisReport = JSON.parse(responseContent);
-      return parsedReport;
-    } catch (error: any) {
-      if (error.message?.includes('autenticación') || error.message?.includes('Groq API Key no configurada')) {
-        throw error;
-      }
-      console.warn(`Error llamando a Groq API con ${currentModel}:`, error?.message || error);
-      lastErrorMessage = error?.message || String(error);
+    if (response.status === 401) {
+      throw new Error('Fallo de autenticación con la API de Groq. Por favor verifica que tu Groq API Key sea válida.');
     }
-  }
 
-  throw new Error(
-    `Error en el servicio de Coaching con Groq AI (${lastErrorMessage}). Por favor verifica tu API Key o la disponibilidad del servicio.`
-  );
+    if (!response.ok) {
+      const errorJson = await response.json().catch(() => ({}));
+      const message = errorJson?.error?.message || `Error HTTP ${response.status}`;
+      throw new Error(message);
+    }
+
+    const jsonResponse = await response.json();
+    const responseContent = jsonResponse.choices?.[0]?.message?.content || '';
+    const parsedReport: AIAnalysisReport = JSON.parse(responseContent);
+    return parsedReport;
+  } catch (error: any) {
+    console.error('Error al llamar a Groq API:', error);
+    throw new Error(`Error en el servicio de Coaching con Groq AI: ${error.message || error}`);
+  }
 };

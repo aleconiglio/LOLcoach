@@ -127,6 +127,5 @@ export interface AIAnalysisReport {
 export interface AppSettings {
   riotApiKey: string;
   groqApiKey: string;
-  groqModel: string;
   isDemoMode: boolean;
 }
