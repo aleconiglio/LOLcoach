@@ -15,7 +15,7 @@ export const getStoredSettings = (): AppSettings => {
     (import.meta.env.VITE_GROQ_API_KEY as string) || '';
 
   const groqModel = localStorage.getItem(STORAGE_KEYS.GROQ_MODEL) || 
-    (import.meta.env.VITE_GROQ_MODEL as string) || 'llama-3.3-70b-specdec';
+    (import.meta.env.VITE_GROQ_MODEL as string) || 'llama-3.3-70b-versatile';
 
   const isDemo = localStorage.getItem(STORAGE_KEYS.DEMO_MODE) === 'true' || false;
 

@@ -27,7 +27,7 @@ export const Header: React.FC<HeaderProps> = ({ settings, onOpenSettings }) => {
               LEAGUE OF LEGENDS AI COACH
             </h1>
             <p className="text-xs text-gray-400 font-sans tracking-wide">
-              Análisis Avanzado de Partidas con Riot API & Groq LLM ({settings.groqModel || 'llama-3.3-70b-specdec'})
+              Análisis Avanzado de Partidas con Riot API & Groq LLM ({settings.groqModel || 'llama-3.3-70b-versatile'})
             </p>
           </div>
         </div>

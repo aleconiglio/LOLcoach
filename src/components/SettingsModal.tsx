@@ -17,7 +17,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const [riotKey, setRiotKey] = useState(settings.riotApiKey);
   const [groqKey, setGroqKey] = useState(settings.groqApiKey);
-  const [groqModel, setGroqModel] = useState(settings.groqModel || 'llama-3.3-70b-specdec');
+  const [groqModel, setGroqModel] = useState(settings.groqModel || 'llama-3.3-70b-versatile');
   const [isDemoMode, setIsDemoMode] = useState(settings.isDemoMode);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
@@ -28,7 +28,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     onSave({
       riotApiKey: riotKey,
       groqApiKey: groqKey,
-      groqModel: groqModel.trim() || 'llama-3.3-70b-specdec',
+      groqModel: groqModel.trim() || 'llama-3.3-70b-versatile',
       isDemoMode,
     });
     setSavedSuccess(true);
@@ -39,10 +39,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   const MODEL_OPTIONS = [
-    { id: 'llama-3.3-70b-specdec', label: 'Llama 3.3 70B (SpecDec - Recomendado)' },
+    { id: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B Versatile (Recomendado)' },
+    { id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B Instant (Rápido / Ligero)' },
+    { id: 'llama3-70b-8192', label: 'Llama 3 70B 8192' },
     { id: 'deepseek-r1-distill-llama-70b', label: 'DeepSeek R1 Distill Llama 70B (Razonamiento)' },
-    { id: 'qwen-2.5-70b-instruct', label: 'Qwen 2.5 70B Instruct' },
-    { id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B Instant (Ultra Rápido)' },
     { id: 'mixtral-8x7b-32768', label: 'Mixtral 8x7B (32k Context)' },
   ];
 
@@ -154,12 +154,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 type="text"
                 value={groqModel === 'custom' ? '' : groqModel}
                 onChange={(e) => setGroqModel(e.target.value)}
-                placeholder="Ej: llama-3.3-70b-specdec"
+                placeholder="Ej: llama-3.3-70b-versatile"
                 className="w-full mt-1.5 px-3 py-2 text-sm bg-hextech-black/80 border border-hextech-gold/30 rounded focus:border-hextech-gold text-gray-100 placeholder-gray-600 focus:outline-none transition-all font-mono"
               />
             )}
             <p className="text-[11px] text-gray-400">
-              Modelos soportados en la API de Groq Cloud (ej: <code className="text-hextech-gold-light">llama-3.3-70b-specdec</code>).
+              Modelos soportados en la API de Groq Cloud (ej: <code className="text-hextech-gold-light">llama-3.3-70b-versatile</code>).
             </p>
           </div>
 

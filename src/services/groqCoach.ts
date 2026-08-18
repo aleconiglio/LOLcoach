@@ -42,6 +42,30 @@ REGLAS DE ANÁLISIS:
 3. Genera un Plan de Acción Inmediato con 3 objetivos CONCRETOS y 100% aplicables en la siguiente partida.
 4. Redacta todo en español neutro, técnico y motivador.`;
 
+export const DEFAULT_GROQ_MODELS = [
+  'llama-3.3-70b-versatile',
+  'llama-3.1-8b-instant',
+  'llama3-70b-8192',
+  'llama3-8b-8192',
+  'deepseek-r1-distill-llama-70b',
+  'mixtral-8x7b-32768',
+];
+
+export const fetchAvailableGroqModels = async (groqApiKey: string): Promise<string[]> => {
+  if (!groqApiKey || groqApiKey.trim() === '') return DEFAULT_GROQ_MODELS;
+  try {
+    const groq = new Groq({ apiKey: groqApiKey, dangerouslyAllowBrowser: true });
+    const modelsList = await groq.models.list();
+    const activeModels = modelsList.data
+      .map((m) => m.id)
+      .filter((id) => !id.includes('whisper') && !id.includes('guard') && !id.includes('vision') && !id.includes('embed'));
+    return activeModels.length > 0 ? activeModels : DEFAULT_GROQ_MODELS;
+  } catch (err) {
+    console.warn('No se pudieron obtener los modelos de la API de Groq, usando la lista predeterminada:', err);
+    return DEFAULT_GROQ_MODELS;
+  }
+};
+
 export const generateGroqCoachAnalysis = async (
   matches: MatchDetail[],
   targetRank: TargetRank,
@@ -57,7 +81,12 @@ export const generateGroqCoachAnalysis = async (
     dangerouslyAllowBrowser: true,
   });
 
-  const modelToUse = groqModel && groqModel.trim() !== '' ? groqModel.trim() : 'llama-3.3-70b-specdec';
+  const preferredModel = groqModel && groqModel.trim() !== '' ? groqModel.trim() : 'llama-3.3-70b-versatile';
+  
+  // Deduplicated list of models to try (preferred first, then fallbacks)
+  const candidateModels = Array.from(
+    new Set([preferredModel, 'llama-3.3-70b-versatile', 'llama-3.1-8b-instant', ...DEFAULT_GROQ_MODELS])
+  );
 
   const benchmark = getBenchmarkForRank(targetRank);
 
@@ -125,31 +154,44 @@ export const generateGroqCoachAnalysis = async (
     matchesDetail: matchSummaries,
   };
 
-  try {
-    const completion = await groq.chat.completions.create({
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        {
-          role: 'user',
-          content: `Realiza el diagnóstico de coaching para el siguiente perfil de partidas de League of Legends:\n\n${JSON.stringify(
-            userPromptPayload,
-            null,
-            2
-          )}`,
-        },
-      ],
-      model: modelToUse,
-      temperature: 0.3,
-      response_format: { type: 'json_object' },
-    });
+  let lastError: any = null;
 
-    const responseContent = completion.choices[0]?.message?.content || '';
-    
-    // Parse JSON safely
-    const parsedReport: AIAnalysisReport = JSON.parse(responseContent);
-    return parsedReport;
-  } catch (error: any) {
-    console.error('Error al llamar a Groq SDK:', error);
-    throw new Error(`Error en el servicio de Coaching con Groq AI: ${error.message || error}`);
+  for (const modelToUse of candidateModels) {
+    try {
+      console.log(`Intentando análisis con modelo Groq: ${modelToUse}...`);
+      const completion = await groq.chat.completions.create({
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          {
+            role: 'user',
+            content: `Realiza el diagnóstico de coaching para el siguiente perfil de partidas de League of Legends:\n\n${JSON.stringify(
+              userPromptPayload,
+              null,
+              2
+            )}`,
+          },
+        ],
+        model: modelToUse,
+        temperature: 0.3,
+        response_format: { type: 'json_object' },
+      });
+
+      const responseContent = completion.choices[0]?.message?.content || '';
+      const parsedReport: AIAnalysisReport = JSON.parse(responseContent);
+      return parsedReport;
+    } catch (error: any) {
+      console.warn(`El modelo ${modelToUse} falló:`, error?.message || error);
+      lastError = error;
+      // If error is not model specific (e.g., authentication or quota), don't retry endlessly
+      if (error?.status === 401 || error?.message?.includes('Invalid API Key') || error?.message?.includes('API key')) {
+        throw new Error(`Groq API Key inválida: ${error.message}`);
+      }
+    }
   }
+
+  throw new Error(
+    `Error en el servicio de Coaching con Groq AI (Modelos probados: ${candidateModels.join(', ')}): ${
+      lastError?.message || lastError || 'Error desconocido'
+    }`
+  );
 };
