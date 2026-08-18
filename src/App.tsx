@@ -98,7 +98,7 @@ export const App: React.FC = () => {
 
         setMatches(fetchedMatches);
 
-        setLoadingStatus('Verificando modelos más recientes en Groq API (https://api.groq.com/openai/v1/models) y realizando análisis...');
+        setLoadingStatus('Generando análisis táctico de coaching con Groq AI...');
         const realReport = await generateGroqCoachAnalysis(
           fetchedMatches,
           formData.targetRank,
