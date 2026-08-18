@@ -45,7 +45,8 @@ REGLAS DE ANÁLISIS:
 export const generateGroqCoachAnalysis = async (
   matches: MatchDetail[],
   targetRank: TargetRank,
-  groqApiKey: string
+  groqApiKey: string,
+  groqModel?: string
 ): Promise<AIAnalysisReport> => {
   if (!groqApiKey || groqApiKey.trim() === '') {
     throw new Error('Groq API Key no configurada. Ingrésala en el panel de Configuración de la aplicación.');
@@ -55,6 +56,8 @@ export const generateGroqCoachAnalysis = async (
     apiKey: groqApiKey,
     dangerouslyAllowBrowser: true,
   });
+
+  const modelToUse = groqModel && groqModel.trim() !== '' ? groqModel.trim() : 'llama-3.3-70b-specdec';
 
   const benchmark = getBenchmarkForRank(targetRank);
 
@@ -135,7 +138,7 @@ export const generateGroqCoachAnalysis = async (
           )}`,
         },
       ],
-      model: 'llama-3.3-70b-versatile',
+      model: modelToUse,
       temperature: 0.3,
       response_format: { type: 'json_object' },
     });
