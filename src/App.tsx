@@ -77,7 +77,7 @@ export const App: React.FC = () => {
         const mockMatchesData = getMockMatches(formData);
         setMatches(mockMatchesData);
 
-        setLoadingStatus(`Generando análisis táctico con Groq AI (${settings.groqModel || 'llama-3.3-70b-versatile'})...`);
+        setLoadingStatus(`Generando análisis táctico con Groq AI (${settings.groqModel || 'llama-3.1-70b-versatile'})...`);
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
         const mockReport = getMockAIReport(formData);
@@ -98,7 +98,7 @@ export const App: React.FC = () => {
 
         setMatches(fetchedMatches);
 
-        setLoadingStatus(`Analizando Timeline, matchups y comparando contra el Rango Objetivo en Groq AI (${settings.groqModel || 'llama-3.3-70b-versatile'})...`);
+        setLoadingStatus(`Analizando Timeline, matchups y comparando contra el Rango Objetivo en Groq AI (${settings.groqModel || 'llama-3.1-70b-versatile'})...`);
         const realReport = await generateGroqCoachAnalysis(
           fetchedMatches,
           formData.targetRank,
