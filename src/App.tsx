@@ -181,7 +181,7 @@ export const App: React.FC = () => {
 
       {/* Footer */}
       <footer className="border-t border-hextech-gold/20 bg-hextech-dark/80 py-4 px-6 text-center text-xs text-gray-500 font-cinzel">
-        League of Legends AI Coach • React + Vite + TypeScript + Groq SDK
+        © {new Date().getFullYear()} LOL AI Coach. All rights reserved. Developed by Alec.
       </footer>
 
       {/* Settings Modal */}
