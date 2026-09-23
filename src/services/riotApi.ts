@@ -28,6 +28,22 @@ export const getGlobalRegion = (platform: PlatformRegion): GlobalRegion => {
   }
 };
 
+const fetchRiotWithRetry = async (url: string, retries = 2, backoffMs = 1200): Promise<Response> => {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch(url);
+    if (res.status === 429) {
+      const retryAfterHeader = res.headers.get('Retry-After');
+      const waitSec = retryAfterHeader ? parseInt(retryAfterHeader, 10) : 0;
+      const waitMs = waitSec > 0 ? (waitSec + 1) * 1000 : backoffMs * (attempt + 1);
+      console.warn(`Riot API Rate limit (429) alcanzado. Esperando ${waitMs}ms antes de reintentar (intento ${attempt + 1}/${retries})...`);
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+      continue;
+    }
+    return res;
+  }
+  return fetch(url);
+};
+
 const handleRiotResponse = async (response: Response) => {
   if (!response.ok) {
     if (response.status === 401 || response.status === 403) {
@@ -56,7 +72,7 @@ export const fetchRiotAccount = async (
 
   const url = `https://${globalRegion}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${cleanGameName}/${cleanTagLine}?api_key=${apiKey}`;
   
-  const data = await fetch(url).then(handleRiotResponse);
+  const data = await fetchRiotWithRetry(url).then(handleRiotResponse);
   return {
     puuid: data.puuid,
     gameName: data.gameName,
@@ -70,9 +86,10 @@ export const fetchMatchIds = async (
   count: number,
   apiKey: string
 ): Promise<string[]> => {
-  // queue=420 is Ranked Solo/Duo
-  const url = `https://${globalRegion}.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=420&start=0&count=${count}&api_key=${apiKey}`;
-  const matchIds = await fetch(url).then(handleRiotResponse);
+  // queue=420 is Ranked Solo/Duo. Riot match-v5 supports up to 100 count per call.
+  const cappedCount = Math.min(100, Math.max(1, count));
+  const url = `https://${globalRegion}.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=420&start=0&count=${cappedCount}&api_key=${apiKey}`;
+  const matchIds = await fetchRiotWithRetry(url).then(handleRiotResponse);
   return matchIds || [];
 };
 
@@ -84,7 +101,7 @@ export const fetchMatchDetail = async (
   targetRank: TargetRank = 'Gold'
 ): Promise<MatchDetail> => {
   const detailUrl = `https://${globalRegion}.api.riotgames.com/lol/match/v5/matches/${matchId}?api_key=${apiKey}`;
-  const detailData = await fetch(detailUrl).then(handleRiotResponse);
+  const detailData = await fetchRiotWithRetry(detailUrl).then(handleRiotResponse);
   const info = detailData.info;
 
   const participants: any[] = info.participants || [];
@@ -156,7 +173,7 @@ export const fetchMatchDetail = async (
 
   try {
     const timelineUrl = `https://${globalRegion}.api.riotgames.com/lol/match/v5/matches/${matchId}/timeline?api_key=${apiKey}`;
-    const timelineData = await fetch(timelineUrl).then(handleRiotResponse);
+    const timelineData = await fetchRiotWithRetry(timelineUrl).then(handleRiotResponse);
     if (timelineData?.info?.frames) {
       const frames = timelineData.info.frames;
       const targetParticipantId = rawTarget.participantId;
@@ -230,59 +247,92 @@ export const fetchFullSummonerAnalysis = async (
   roleFilter: RoleFilter,
   championFilter: string,
   apiKey: string,
-  targetRank: TargetRank = 'Gold'
+  targetRank: TargetRank = 'Gold',
+  onProgress?: (current: number, target: number) => void
 ): Promise<{ account: RiotAccount; matches: MatchDetail[] }> => {
   const account = await fetchRiotAccount(gameName, tagLine, platform, apiKey);
   const globalRegion = getGlobalRegion(platform);
   
-  // Request slightly more match IDs to allow for champion/role/remake filtering
-  const requestCount = Math.min(championFilter || roleFilter !== 'ALL' ? count * 3 : count + 6, 40);
-  const rawMatchIds = await fetchMatchIds(account.puuid, globalRegion, requestCount, apiKey);
+  // Solicitar un pool suficientemente amplio de IDs a Riot (Riot match-v5 soporta hasta 100 IDs por request)
+  // Si hay filtro de campeón o rol, el ratio de descarte es más alto, por lo que pedimos hasta 100
+  const idPoolSize = (championFilter && championFilter.trim()) || roleFilter !== 'ALL'
+    ? Math.min(100, Math.max(count * 5, 80))
+    : Math.min(100, Math.max(count * 2, 40));
+
+  const rawMatchIds = await fetchMatchIds(account.puuid, globalRegion, idPoolSize, apiKey);
   const matchIds = Array.isArray(rawMatchIds) ? rawMatchIds : [];
 
   if (matchIds.length === 0) {
     throw new Error('No se encontraron partidas Ranked Solo/Duo recientes para este invocador.');
   }
 
-  const matchPromises = matchIds.map((id) =>
-    fetchMatchDetail(id, globalRegion, account.puuid, apiKey, targetRank).catch(() => null)
-  );
+  const validMatches: MatchDetail[] = [];
+  const searchChamp = championFilter.trim().toLowerCase();
+  const riotPosition =
+    roleFilter === 'MID' ? 'MID' :
+    roleFilter === 'BOT' ? 'BOT' :
+    roleFilter === 'SUPPORT' ? 'SUPPORT' : roleFilter;
 
-  const rawMatches = await Promise.all(matchPromises);
-  let validMatches = rawMatches.filter((m): m is MatchDetail => m !== null);
+  // Procesar en lotes (batch) de 4 partidas para respetar estrictamente el límite de 20 requests/segundo
+  // de Riot Games Developer Keys (cada partida consume 1-2 requests: detalle + timeline).
+  const BATCH_SIZE = 4;
 
-  // Excluir partidas menores a 8 minutos (480 segundos) ya que son remakes y alteran las métricas
-  validMatches = validMatches.filter((m) => (m.gameDuration || 0) >= 480);
+  for (let i = 0; i < matchIds.length; i += BATCH_SIZE) {
+    if (validMatches.length >= count) {
+      break;
+    }
 
-  // Apply Champion filter if provided
-  if (championFilter.trim()) {
-    const searchChamp = championFilter.trim().toLowerCase();
-    validMatches = validMatches.filter((m) =>
-      m.targetSummoner.championName.toLowerCase().includes(searchChamp)
+    const batchIds = matchIds.slice(i, i + BATCH_SIZE);
+    const batchPromises = batchIds.map((id) =>
+      fetchMatchDetail(id, globalRegion, account.puuid, apiKey, targetRank).catch((err) => {
+        console.warn(`Error al obtener detalle de partida ${id}:`, err);
+        return null;
+      })
     );
+
+    const batchResults = await Promise.all(batchPromises);
+
+    for (const match of batchResults) {
+      if (!match) continue;
+
+      // 1. Excluir partidas menores a 8 minutos (480 segundos) ya que son remakes y alteran métricas
+      if ((match.gameDuration || 0) < 480) {
+        continue;
+      }
+
+      // 2. Filtro de Campeón si está configurado
+      if (searchChamp && !match.targetSummoner.championName.toLowerCase().includes(searchChamp)) {
+        continue;
+      }
+
+      // 3. Filtro de Rol / Línea si no es ALL
+      if (roleFilter !== 'ALL' && match.targetSummoner.teamPosition.toUpperCase() !== riotPosition) {
+        continue;
+      }
+
+      validMatches.push(match);
+
+      if (onProgress) {
+        onProgress(Math.min(validMatches.length, count), count);
+      }
+
+      if (validMatches.length >= count) {
+        break;
+      }
+    }
+
+    // Retardo suave entre lotes (150ms) para garantizar que jamás se sobrepase el límite de 20 req/s
+    if (validMatches.length < count && i + BATCH_SIZE < matchIds.length) {
+      await new Promise((r) => setTimeout(r, 150));
+    }
   }
 
-  // Apply Role filter if not ALL
-  if (roleFilter !== 'ALL') {
-    const riotPosition =
-      roleFilter === 'MID' ? 'MID' :
-      roleFilter === 'BOT' ? 'BOT' :
-      roleFilter === 'SUPPORT' ? 'SUPPORT' : roleFilter;
-
-    validMatches = validMatches.filter((m) =>
-      m.targetSummoner.teamPosition.toUpperCase() === riotPosition
-    );
-  }
-
-  // Cap at requested count
-  const finalMatches = validMatches.slice(0, count);
-
-  if (finalMatches.length === 0) {
+  if (validMatches.length === 0) {
     throw new Error('No se encontraron partidas válidas de más de 8 minutos (se excluyen remakes) que coincidan con los filtros especificados.');
   }
 
   return {
     account,
-    matches: finalMatches,
+    matches: validMatches.slice(0, count),
   };
 };

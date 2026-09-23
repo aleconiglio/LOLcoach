@@ -53,6 +53,7 @@ REGLAS DE FORMATO:
 - Genera exactamente 3 Puntos Fuertes globales basados en las métricas más destacadas.
 - Genera exactamente 3 Errores Críticos globales con soluciones técnicas detalladas.
 - Genera OBLIGATORIAMENTE un elemento en 'matchBreakdowns' para cada una de las partidas listadas en 'matchesDetail'.
+- En 'matchBreakdowns', sé altamente incisivo, técnico y concreto (1 a 2 oraciones densas por cuadrante), mencionando habilidades clave y momentos exactos sin rodeos.
 - OBLIGATORIO: Usa estrictamente los nombres de clave en inglés "strengths", "criticalErrors" y "matchBreakdowns" en el JSON.
 - Redacta el contenido en español neutro, técnico, incisivo y profesional.`;
 
@@ -348,9 +349,8 @@ export const generateGroqCoachAnalysis = async (
     }
   }));
 
-  // Cap detailed per-match breakdown to the 5 most recent matches to prevent Groq TPM / token limit overflow
-  // (Overall aggregate stats already cover all games comprehensively)
-  const detailedMatches = matchSummaries.slice(0, 5);
+  // Enviar todas las partidas analizadas (hasta 20) para que Groq genere el desglose táctico de cada una
+  const detailedMatches = matchSummaries.slice(0, 20);
 
   const userPromptPayload = {
     targetRankBenchmark: benchmark,
@@ -392,7 +392,7 @@ export const generateGroqCoachAnalysis = async (
           ],
           model: modelToUse,
           temperature: 0.3,
-          max_tokens: 2800,
+          max_tokens: 4000,
           response_format: { type: 'json_object' },
         }),
       });
@@ -407,9 +407,9 @@ export const generateGroqCoachAnalysis = async (
         lastErrorMessage = message;
         console.warn(`El modelo ${modelToUse} devolvió error HTTP ${response.status} (${message}).`);
 
-        // Si el error es por límite de longitud o tokens por minuto (TPM), reducir aún más las partidas y reintentar
+        // Si el error es por límite de longitud o tokens por minuto (TPM), reducir partidas y reintentar
         if (message.includes('reduce the length') || message.includes('rate_limit') || message.includes('TPM')) {
-          userPromptPayload.matchesDetail = matchSummaries.slice(0, 2);
+          userPromptPayload.matchesDetail = matchSummaries.slice(0, 5);
         }
         continue;
       }

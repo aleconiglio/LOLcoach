@@ -169,6 +169,7 @@ export const getMockAIReport = (formData: SearchFormData): AIAnalysisReport => {
       : 'Syndra';
 
   const rank = formData.targetRank || 'Gold';
+  const count = formData.matchCount || 5;
 
   return {
     coachingGrade: 'A-',
@@ -230,47 +231,48 @@ export const getMockAIReport = (formData: SearchFormData): AIAnalysisReport => {
         targetMetric: `Alcanzar 7.5+ CS/min sostenido hasta min 25`
       }
     ],
-    matchBreakdowns: [
-      {
-        game: 1,
-        matchId: 'MOCK_MATCH_1000',
-        laneMatchup: `Dominio de trades cortos con ${champ} castigando los momentos en que ${oppChamp} usaba su habilidad principal para last-hitear. Tu retención de habilidad defensiva evitó que entraran en rango de all-in.`,
-        macroAndVision: `Ward en pixel bush al minuto 2:40 detectó el intento de gank del jungla. Controlaste la prioridad de carril para ayudar en la captura de las 3 primeras Larvas del Vacío.`,
-        buildVerdict: `Power spike limpio de Compañera de Luden al min 12:15. El cambio inmediato a Botas de Hechicero te dio la penetración necesaria para ganar la escaramuza de Dragón.`,
-        decisiveFactor: `Victoria cimentada en la rotación al min 16:30 con ventaja de Heraldo y 0 muertes en fase temprana.`
-      },
-      {
-        game: 2,
-        matchId: 'MOCK_MATCH_1001',
-        laneMatchup: `Matchup desfavorable ante ${oppChamp}. En la oleada 2 empujaste sin Crash, lo que congeló la línea bajo torre rival y te dejó expuesto a un all-in en nivel 3.`,
-        macroAndVision: `Falta de visión en el tribush al min 3:20 costó la primera sangre. Tras esa muerte, tu ritmo de farmeo cayó a 5.8 CS/min al tener que ceder oleadas.`,
-        buildVerdict: `Demora en comprar el componente defensivo reactivo (Buscadora/Tabis). Completaste tu primer objeto ofensivo cuando el rival ya tenía ventaja de 1.5 niveles.`,
-        decisiveFactor: `Derrota acelerada por sobre-extensión en carril central sin flash al minuto 14:10.`
-      },
-      {
-        game: 3,
-        matchId: 'MOCK_MATCH_1002',
-        laneMatchup: `Excelente ejecución de Cheater Recall en la 3ª oleada (min 3:15) frente a ${oppChamp}. Volviste con Tomo Amplificador y ventaja de vida que forzó el Flash enemigo.`,
-        macroAndVision: `Sólido control de visión en el foso de Dragón: 2 pink wards colocados antes de cada spawn garantizaron visión limpia para tu jungla.`,
-        buildVerdict: `Sinergia óptima de Liandry y Cetro de Rylai. La ralentización en área inutilizó la iniciación del equipo enemigo en peleas grupales.`,
-        decisiveFactor: `Victoria sellada por un flanqueo perfecto en la pelea de 3er Dragón al minuto 22.`
-      },
-      {
-        game: 4,
-        matchId: 'MOCK_MATCH_1003',
-        laneMatchup: `Línea pasiva pero segura contra ${oppChamp}. Intercambios simétricos donde mantuviste 74 CS al minuto 10 respetando el rango de iniciación rival.`,
-        macroAndVision: `Buen seguimiento a los colapsos en río, aunque perdiste una oleada completa en torre por no estampar antes de rotar a ayudar a tu jungla.`,
-        buildVerdict: `Elección de Reloj de Arena de Zhonya como 2º objeto neutralizó el combo explosivo de su asesino.`,
-        decisiveFactor: `Victoria lograda por asedio constante en calles laterales tras el minuto 20.`
-      },
-      {
-        game: 5,
-        matchId: 'MOCK_MATCH_1004',
-        laneMatchup: `Intercambios desfavorables por entrar en rango de habilidades con cooldown de tu habilidad de escape. Sufriste 2 muertes en nivel 4 y 6 frente a ${oppChamp}.`,
-        macroAndVision: `Sin visión profunda en la jungla rival; te sorprendió una emboscada 3v1 en río tras no retroceder cuando el mapa estaba a oscuras.`,
-        buildVerdict: `Construcción demasiado codiciosa con Rabadon de 2º objeto en vez de resistencia mágica o Zhonya ante su ventaja.`,
-        decisiveFactor: `Derrota por colapso enemigo en Barón tras quedar cazado en la jungla lateral.`
-      }
-    ]
+    matchBreakdowns: Array.from({ length: count }, (_, i) => {
+      const matchIndex = i % 5;
+      const gameNum = i + 1;
+      const matchId = `MOCK_MATCH_${1000 + i}`;
+      const templates = [
+        {
+          laneMatchup: `Dominio de trades cortos con ${champ} castigando los momentos en que ${oppChamp} usaba su habilidad principal para last-hitear. Tu retención de habilidad defensiva evitó que entraran en rango de all-in.`,
+          macroAndVision: `Ward en pixel bush al minuto 2:40 detectó el intento de gank del jungla. Controlaste la prioridad de carril para ayudar en la captura de las 3 primeras Larvas del Vacío.`,
+          buildVerdict: `Power spike limpio de Compañera de Luden al min 12:15. El cambio inmediato a Botas de Hechicero te dio la penetración necesaria para ganar la escaramuza de Dragón.`,
+          decisiveFactor: `Victoria cimentada en la rotación al min 16:30 con ventaja de Heraldo y 0 muertes en fase temprana.`
+        },
+        {
+          laneMatchup: `Matchup desfavorable ante ${oppChamp}. En la oleada 2 empujaste sin Crash, lo que congeló la línea bajo torre rival y te dejó expuesto a un all-in en nivel 3.`,
+          macroAndVision: `Falta de visión en el tribush al min 3:20 costó la primera sangre. Tras esa muerte, tu ritmo de farmeo cayó a 5.8 CS/min al tener que ceder oleadas.`,
+          buildVerdict: `Demora en comprar el componente defensivo reactivo (Buscadora/Tabis). Completaste tu primer objeto ofensivo cuando el rival ya tenía ventaja de 1.5 niveles.`,
+          decisiveFactor: `Derrota acelerada por sobre-extensión en carril central sin flash al minuto 14:10.`
+        },
+        {
+          laneMatchup: `Excelente ejecución de Cheater Recall en la 3ª oleada (min 3:15) frente a ${oppChamp}. Volviste con Tomo Amplificador y ventaja de vida que forzó el Flash enemigo.`,
+          macroAndVision: `Sólido control de visión en el foso de Dragón: 2 pink wards colocados antes de cada spawn garantizaron visión limpia para tu jungla.`,
+          buildVerdict: `Sinergia óptima de Liandry y Cetro de Rylai. La ralentización en área inutilizó la iniciación del equipo enemigo en peleas grupales.`,
+          decisiveFactor: `Victoria sellada por un flanqueo perfecto en la pelea de 3er Dragón al minuto 22.`
+        },
+        {
+          laneMatchup: `Línea pasiva pero segura contra ${oppChamp}. Intercambios simétricos donde mantuviste 74 CS al minuto 10 respetando el rango de iniciación rival.`,
+          macroAndVision: `Buen seguimiento a los colapsos en río, aunque perdiste una oleada completa en torre por no estampar antes de rotar a ayudar a tu jungla.`,
+          buildVerdict: `Elección de Reloj de Arena de Zhonya como 2º objeto neutralizó el combo explosivo de su asesino.`,
+          decisiveFactor: `Victoria lograda por asedio constante en calles laterales tras el minuto 20.`
+        },
+        {
+          laneMatchup: `Intercambios desfavorables por entrar en rango de habilidades con cooldown de tu habilidad de escape. Sufriste 2 muertes en nivel 4 y 6 frente a ${oppChamp}.`,
+          macroAndVision: `Sin visión profunda en la jungla rival; te sorprendió una emboscada 3v1 en río tras no retroceder cuando el mapa estaba a oscuras.`,
+          buildVerdict: `Construcción demasiado codiciosa con Rabadon de 2º objeto en vez de resistencia mágica o Zhonya ante su ventaja.`,
+          decisiveFactor: `Derrota por colapso enemigo en Barón tras quedar cazado en la jungla lateral.`
+        }
+      ];
+
+      return {
+        game: gameNum,
+        matchId,
+        ...templates[matchIndex]
+      };
+    })
   };
 };

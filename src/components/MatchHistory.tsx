@@ -18,6 +18,7 @@ import {
 
 interface MatchHistoryProps {
   matches: MatchDetail[];
+  requestedCount?: number;
 }
 
 const parseAdviceTip = (tip: string) => {
@@ -65,7 +66,7 @@ const getCategoryStyle = (tag: string) => {
   };
 };
 
-export const MatchHistory: React.FC<MatchHistoryProps> = ({ matches }) => {
+export const MatchHistory: React.FC<MatchHistoryProps> = ({ matches, requestedCount }) => {
   const [expandedMatchId, setExpandedMatchId] = useState<string | null>(
     matches && matches.length > 0 ? matches[0].matchId : null
   );
@@ -89,6 +90,11 @@ export const MatchHistory: React.FC<MatchHistoryProps> = ({ matches }) => {
           <span className="text-[10px] text-gray-400 bg-hextech-navy/80 px-2 py-0.5 rounded border border-hextech-gold/20 font-mono">
             Excluye remakes (&lt; 8 min)
           </span>
+          {requestedCount && matches.length < requestedCount && (
+            <span className="text-[11px] text-amber-300 bg-amber-950/80 px-2.5 py-0.5 rounded border border-amber-500/40 font-sans flex items-center gap-1">
+              Mostrando {matches.length} de {requestedCount} solicitadas (total disponible en Riot con estos filtros)
+            </span>
+          )}
         </div>
         <span className="text-xs text-hextech-cyan font-sans flex items-center gap-1">
           <Sparkles className="w-3.5 h-3.5" /> Haz clic en cualquier partida para desplegar consejos tácticos

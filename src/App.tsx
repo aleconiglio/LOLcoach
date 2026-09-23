@@ -99,7 +99,10 @@ export const App: React.FC = () => {
           formData.roleFilter,
           formData.championFilter,
           settings.riotApiKey,
-          formData.targetRank
+          formData.targetRank,
+          (current, target) => {
+            setLoadingStatus(`Recuperando partidas válidas (${current}/${target})...`);
+          }
         );
 
         setLoadingStatus('Generando análisis táctico de coaching con Groq AI...');
@@ -189,7 +192,7 @@ export const App: React.FC = () => {
             )}
 
             {/* Match History Breakdown */}
-            <MatchHistory matches={matches} />
+            <MatchHistory matches={matches} requestedCount={formData.matchCount} />
 
           </div>
         )}
