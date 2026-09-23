@@ -81,6 +81,11 @@ export const App: React.FC = () => {
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
         const mockReport = getMockAIReport(formData);
+        const enrichedMockMatches = mockMatchesData.map((m, idx) => ({
+          ...m,
+          aiBreakdown: mockReport.matchBreakdowns?.[idx],
+        }));
+        setMatches(enrichedMockMatches);
         setAiReport(mockReport);
       } else {
         // LIVE RIOT API + GROQ PIPELINE
@@ -97,8 +102,6 @@ export const App: React.FC = () => {
           formData.targetRank
         );
 
-        setMatches(fetchedMatches);
-
         setLoadingStatus('Generando análisis táctico de coaching con Groq AI...');
         const realReport = await generateGroqCoachAnalysis(
           fetchedMatches,
@@ -106,6 +109,19 @@ export const App: React.FC = () => {
           settings.groqApiKey
         );
 
+        // Vincular el desglose de IA hiper-específico a cada partida individual
+        const enrichedMatches = fetchedMatches.map((m, idx) => {
+          const breakdown =
+            realReport.matchBreakdowns?.find(
+              (b) => b.game === idx + 1 || (b.matchId && b.matchId === m.matchId)
+            ) || realReport.matchBreakdowns?.[idx];
+          return {
+            ...m,
+            aiBreakdown: breakdown,
+          };
+        });
+
+        setMatches(enrichedMatches);
         setAiReport(realReport);
       }
     } catch (err: any) {

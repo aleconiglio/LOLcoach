@@ -26,7 +26,7 @@ Estructura obligatoria del JSON:
   "strengths": [
     {
       "title": "Nombre técnico de la fortaleza (ej. Conversión de Daño con Power Spike de 1 Ítem)",
-      "description": "Explicación detallada con contexto estratégico y de campeón",
+      "description": "Explicación detallada con contexto estratégico y de campeón citando partidas",
       "metric": "Dato o métrica numérica destacada"
     }
   ],
@@ -37,13 +37,23 @@ Estructura obligatoria del JSON:
       "impact": "CRÍTICO" | "ALTO" | "MEDIO",
       "recommendation": "Instrucción de corrección técnica hiper-específica (mencionando habilidades, oleadas u objetos exactos)"
     }
+  ],
+  "matchBreakdowns": [
+    {
+      "game": 1,
+      "laneMatchup": "Análisis profundo y personalizado del 1v1 en fase de líneas: cómo tradear contra [campeón rival], habilidades clave a esquivar o castigar (menciona nombres y teclas Q/W/E/R de ambos campeones) y control de oleadas.",
+      "macroAndVision": "Análisis de visión, mapa y timings: si hubo muerte temprana por gank, control de río pre-Dragón/Larvas y presencia en objetivos.",
+      "buildVerdict": "Evaluación de la build de ítems comprados en esta partida frente a la composición y daño del rival.",
+      "decisiveFactor": "El factor o error determinante que selló la victoria o derrota en esta partida."
+    }
   ]
 }
 
 REGLAS DE FORMATO:
-- Genera exactamente 3 Puntos Fuertes basados en las métricas más destacadas.
-- Genera exactamente 3 Errores Críticos con soluciones técnicas detalladas.
-- OBLIGATORIO: Usa estrictamente los nombres de clave en inglés "strengths" y "criticalErrors" en el JSON.
+- Genera exactamente 3 Puntos Fuertes globales basados en las métricas más destacadas.
+- Genera exactamente 3 Errores Críticos globales con soluciones técnicas detalladas.
+- Genera OBLIGATORIAMENTE un elemento en 'matchBreakdowns' para cada una de las partidas listadas en 'matchesDetail'.
+- OBLIGATORIO: Usa estrictamente los nombres de clave en inglés "strengths", "criticalErrors" y "matchBreakdowns" en el JSON.
 - Redacta el contenido en español neutro, técnico, incisivo y profesional.`;
 
 export const fetchLatestGroqModels = async (groqApiKey: string): Promise<string[]> => {
@@ -212,6 +222,29 @@ export const normalizeAIReport = (raw: any): AIAnalysisReport => {
     recommendation: String(e?.recommendation || e?.solucion || e?.solution || e?.recomendacion || e?.remedio || e?.correccion || ''),
   }));
 
+  const rawBreakdownsCandidate =
+    unwrapped.matchBreakdowns ||
+    unwrapped.match_breakdowns ||
+    unwrapped.partidas ||
+    unwrapped.analisis_partidas ||
+    unwrapped.matches ||
+    extractListFromKeys(unwrapped, [/breakdown/i, /partida/i, /match/i]);
+
+  const rawBreakdowns = Array.isArray(rawBreakdownsCandidate)
+    ? rawBreakdownsCandidate
+    : rawBreakdownsCandidate && typeof rawBreakdownsCandidate === 'object'
+    ? Object.values(rawBreakdownsCandidate)
+    : [];
+
+  const matchBreakdowns = rawBreakdowns.map((b: any, idx: number) => ({
+    game: Number(b?.game || b?.partida || idx + 1),
+    matchId: b?.matchId || b?.match_id ? String(b.matchId || b.match_id) : undefined,
+    laneMatchup: String(b?.laneMatchup || b?.lane_matchup || b?.matchup || b?.fase_de_lineas || b?.linea || ''),
+    macroAndVision: String(b?.macroAndVision || b?.macro_and_vision || b?.macro || b?.vision || b?.oleadas || ''),
+    buildVerdict: String(b?.buildVerdict || b?.build_verdict || b?.build || b?.items || b?.itemizacion || ''),
+    decisiveFactor: String(b?.decisiveFactor || b?.decisive_factor || b?.factor_clave || b?.conclusion || b?.verdict || ''),
+  }));
+
   return {
     coachingGrade: String(
       unwrapped.coachingGrade || unwrapped.coaching_grade || unwrapped.grade || 'A-'
@@ -226,6 +259,7 @@ export const normalizeAIReport = (raw: any): AIAnalysisReport => {
     strengths,
     criticalErrors,
     actionPlan: [],
+    matchBreakdowns: matchBreakdowns.length > 0 ? matchBreakdowns : undefined,
   };
 };
 
@@ -358,7 +392,7 @@ export const generateGroqCoachAnalysis = async (
           ],
           model: modelToUse,
           temperature: 0.3,
-          max_tokens: 1500,
+          max_tokens: 2800,
           response_format: { type: 'json_object' },
         }),
       });

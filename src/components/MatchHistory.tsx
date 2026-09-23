@@ -12,7 +12,8 @@ import {
   Coins, 
   Target, 
   Sparkles,
-  Eye
+  Eye,
+  Compass
 } from 'lucide-react';
 
 interface MatchHistoryProps {
@@ -238,47 +239,110 @@ export const MatchHistory: React.FC<MatchHistoryProps> = ({ matches }) => {
 
               {/* EXPANDABLE ACCORDION CONTENT: Game-Specific AI Tips & Timeline */}
               {isExpanded && (
-                <div className="p-4 bg-hextech-black/80 border-t border-hextech-gold/20 space-y-4 animate-fade-in">
+                <div className="p-4 bg-hextech-black/90 border-t border-hextech-gold/20 space-y-4 animate-fade-in">
                   
-                  {/* Game Specific Tactical Tips Header */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-hextech-gold font-cinzel text-xs font-bold uppercase tracking-wider">
-                      <Zap className="w-4 h-4 text-hextech-gold" />
-                      <span>CONSEJOS TÁCTICOS ESPECÍFICOS DE ESTA PARTIDA</span>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                      {Array.isArray(m.specificAdvice) && m.specificAdvice.length > 0 ? (
-                        m.specificAdvice.map((tip, tIdx) => {
-                          const { tag, content } = parseAdviceTip(tip);
-                          const style = getCategoryStyle(tag);
-                          return (
-                            <div
-                              key={tIdx}
-                              className={`p-3.5 bg-hextech-navy/95 rounded-lg border ${style.borderClass} text-xs text-gray-200 leading-relaxed font-sans space-y-2 transition-all shadow-md`}
-                            >
-                              <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-2">
-                                <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider font-cinzel ${style.badgeClass}`}>
-                                  {style.icon}
-                                  {tag}
-                                </span>
-                                <span className="w-5 h-5 rounded-full bg-hextech-black/60 text-hextech-gold font-mono font-bold text-[10px] flex items-center justify-center shrink-0 border border-hextech-gold/30">
-                                  #{tIdx + 1}
-                                </span>
-                              </div>
-                              <p className="text-gray-300 leading-relaxed font-sans text-[11px] md:text-xs">
-                                {content}
-                              </p>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <div className="p-3 bg-hextech-navy/90 rounded text-xs text-gray-300">
-                          Conserva el farm en min 15+ y mantén el control de wards defensivos.
+                  {/* AI Deep Breakdown Section (if available) */}
+                  {m.aiBreakdown ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2 border-b border-hextech-gold/30 pb-2 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-hextech-gold animate-pulse" />
+                          <span className="text-xs font-bold text-hextech-gold font-cinzel tracking-wider">
+                            AUDITORÍA TÁCTICA IA (GROQ CHALLENGER) - PARTIDA #{idx + 1}
+                          </span>
                         </div>
-                      )}
+                        <span className="text-[11px] text-gray-300 font-mono">
+                          {p.championName} vs {opp ? opp.championName : 'Rival de Línea'} • {isWin ? 'Victoria' : 'Derrota'}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {/* Card 1: Matchup & Fase de Líneas */}
+                        <div className="p-3.5 bg-hextech-navy/90 rounded-lg border border-rose-500/30 space-y-1.5 shadow-md hover:border-rose-500/50 transition-all">
+                          <div className="flex items-center gap-1.5 text-rose-300 font-cinzel text-xs font-bold">
+                            <Swords className="w-3.5 h-3.5 text-rose-400" />
+                            <span>1. MATCHUP DIRECTO & LÍNEA</span>
+                          </div>
+                          <p className="text-xs text-gray-200 leading-relaxed font-sans">
+                            {m.aiBreakdown.laneMatchup}
+                          </p>
+                        </div>
+
+                        {/* Card 2: Macro, Oleadas & Visión */}
+                        <div className="p-3.5 bg-hextech-navy/90 rounded-lg border border-sky-500/30 space-y-1.5 shadow-md hover:border-sky-500/50 transition-all">
+                          <div className="flex items-center gap-1.5 text-sky-300 font-cinzel text-xs font-bold">
+                            <Compass className="w-3.5 h-3.5 text-sky-400" />
+                            <span>2. MACRO, OLEADAS & VISIÓN</span>
+                          </div>
+                          <p className="text-xs text-gray-200 leading-relaxed font-sans">
+                            {m.aiBreakdown.macroAndVision}
+                          </p>
+                        </div>
+
+                        {/* Card 3: Build de Ítems vs Rival */}
+                        <div className="p-3.5 bg-hextech-navy/90 rounded-lg border border-amber-500/30 space-y-1.5 shadow-md hover:border-amber-500/50 transition-all">
+                          <div className="flex items-center gap-1.5 text-amber-300 font-cinzel text-xs font-bold">
+                            <Award className="w-3.5 h-3.5 text-amber-400" />
+                            <span>3. ITEMIZACIÓN & POWER SPIKES</span>
+                          </div>
+                          <p className="text-xs text-gray-200 leading-relaxed font-sans">
+                            {m.aiBreakdown.buildVerdict}
+                          </p>
+                        </div>
+
+                        {/* Card 4: Factor Determinante */}
+                        <div className="p-3.5 bg-hextech-navy/90 rounded-lg border border-emerald-500/30 space-y-1.5 shadow-md hover:border-emerald-500/50 transition-all">
+                          <div className="flex items-center gap-1.5 text-emerald-300 font-cinzel text-xs font-bold">
+                            <Target className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>4. FACTOR DETERMINANTE DEL RESULTADO</span>
+                          </div>
+                          <p className="text-xs text-gray-200 leading-relaxed font-sans">
+                            {m.aiBreakdown.decisiveFactor}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    /* Fallback to rule-based advice if no AI breakdown yet */
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-hextech-gold font-cinzel text-xs font-bold uppercase tracking-wider">
+                        <Zap className="w-4 h-4 text-hextech-gold" />
+                        <span>CONSEJOS TÁCTICOS ESPECÍFICOS DE ESTA PARTIDA</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                        {Array.isArray(m.specificAdvice) && m.specificAdvice.length > 0 ? (
+                          m.specificAdvice.map((tip, tIdx) => {
+                            const { tag, content } = parseAdviceTip(tip);
+                            const style = getCategoryStyle(tag);
+                            return (
+                              <div
+                                key={tIdx}
+                                className={`p-3.5 bg-hextech-navy/95 rounded-lg border ${style.borderClass} text-xs text-gray-200 leading-relaxed font-sans space-y-2 transition-all shadow-md`}
+                              >
+                                <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-2">
+                                  <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider font-cinzel ${style.badgeClass}`}>
+                                    {style.icon}
+                                    {tag}
+                                  </span>
+                                  <span className="w-5 h-5 rounded-full bg-hextech-black/60 text-hextech-gold font-mono font-bold text-[10px] flex items-center justify-center shrink-0 border border-hextech-gold/30">
+                                    #{tIdx + 1}
+                                  </span>
+                                </div>
+                                <p className="text-gray-300 leading-relaxed font-sans text-[11px] md:text-xs">
+                                  {content}
+                                </p>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="p-3 bg-hextech-navy/90 rounded text-xs text-gray-300">
+                            Conserva el farm en min 15+ y mantén el control de wards defensivos.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Advanced Timeline & Direct Comparison */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-hextech-gold/15">

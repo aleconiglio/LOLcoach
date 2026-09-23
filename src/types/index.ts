@@ -62,6 +62,15 @@ export interface MatchParticipant {
   laneOpponent?: MatchParticipant;
 }
 
+export interface AIMatchBreakdown {
+  game: number;
+  matchId?: string;
+  laneMatchup: string;     // Diagnóstico del 1v1 y habilidades contra el campeón rival específico
+  macroAndVision: string;  // Timings de ganks, control de oleadas y rotaciones
+  buildVerdict: string;    // Eficacia de los ítems comprados frente a la build enemiga
+  decisiveFactor: string;  // Qué jugada o error definió el resultado de esta partida
+}
+
 export interface MatchDetail {
   matchId: string;
   gameMode: string;
@@ -70,6 +79,7 @@ export interface MatchDetail {
   targetSummoner: MatchParticipant;
   laneOpponent?: MatchParticipant;
   specificAdvice?: string[];
+  aiBreakdown?: AIMatchBreakdown;
   timelineHighlights?: {
     firstDeathTimeMin?: number;
     mythicItemTimeMin?: number;
@@ -122,6 +132,7 @@ export interface AIAnalysisReport {
   }[];
   summaryText: string;
   coachingGrade: string; // e.g. "A-", "B+", "S"
+  matchBreakdowns?: AIMatchBreakdown[];
 }
 
 export interface AppSettings {
