@@ -4,8 +4,10 @@ import {
   RiotAccount, 
   MatchDetail, 
   MatchParticipant,
-  RoleFilter
+  RoleFilter,
+  TargetRank
 } from '../types';
+import { generateMatchTacticalAdvice } from './tacticalAdvice';
 
 export const getGlobalRegion = (platform: PlatformRegion): GlobalRegion => {
   switch (platform) {
@@ -78,7 +80,8 @@ export const fetchMatchDetail = async (
   matchId: string,
   globalRegion: GlobalRegion,
   puuid: string,
-  apiKey: string
+  apiKey: string,
+  targetRank: TargetRank = 'Gold'
 ): Promise<MatchDetail> => {
   const detailUrl = `https://${globalRegion}.api.riotgames.com/lol/match/v5/matches/${matchId}?api_key=${apiKey}`;
   const detailData = await fetch(detailUrl).then(handleRiotResponse);
@@ -198,41 +201,14 @@ export const fetchMatchDetail = async (
     console.warn('Match timeline unavailable, using estimated early stats.', err);
   }
 
-  // Generate specific advice for this match based on live metrics
-  const specificAdvice: string[] = [];
-  
-  if (targetSummoner.win) {
-    specificAdvice.push(
-      `Partida Ganada con ${targetSummoner.championName}: Mantuviste un ritmo de farm de ${targetSummoner.csPerMin} CS/min con un KDA de ${targetSummoner.kda}. Excelente aprovechamiento de ventajas.`
-    );
-  } else {
-    specificAdvice.push(
-      `Partida Derrota con ${targetSummoner.championName}: Se registraron ${timelineHighlights.deathsBefore15} muertes en los primeros 15 minutos. Trabaja en el control de oleadas y en retroceder cuando no tengas visión del jungla.`
-    );
-  }
-
-  if (laneOpponent) {
-    if (targetSummoner.totalDamageDealtToChampions >= laneOpponent.totalDamageDealtToChampions) {
-      specificAdvice.push(
-        `Superaste en daño a tu rival directo (${laneOpponent.championName}) por ${targetSummoner.totalDamageDealtToChampions - laneOpponent.totalDamageDealtToChampions} de daño total. Buen posicionamiento en teamfights.`
-      );
-    } else {
-      specificAdvice.push(
-        `Tu rival de carril (${laneOpponent.championName}) acumuló ${laneOpponent.goldEarned} de oro y mayor impacto de daño. Considera ajustar tu itemización defensiva en fase de carril.`
-      );
-    }
-  }
-
-  const visionPerMin = Number((targetSummoner.visionScore / (info.gameDuration / 60)).toFixed(2));
-  if (visionPerMin < 1.0) {
-    specificAdvice.push(
-      `Puntaje de visión de ${targetSummoner.visionScore} (${visionPerMin}/min). Se recomienda adquirir al menos 1-2 Control Wards por partida para prevenir emboscadas.`
-    );
-  } else {
-    specificAdvice.push(
-      `Buen aporte de visión con ${targetSummoner.visionScore} puntos (${visionPerMin}/min) durante los ${Math.round(info.gameDuration / 60)} minutos de partida.`
-    );
-  }
+  // Generate hyper-specific tactical advice for this match based on live metrics
+  const specificAdvice = generateMatchTacticalAdvice({
+    targetSummoner,
+    laneOpponent,
+    gameDuration: info.gameDuration || 1800,
+    targetRank,
+    timelineHighlights,
+  });
 
   return {
     matchId,
@@ -253,7 +229,8 @@ export const fetchFullSummonerAnalysis = async (
   count: number,
   roleFilter: RoleFilter,
   championFilter: string,
-  apiKey: string
+  apiKey: string,
+  targetRank: TargetRank = 'Gold'
 ): Promise<{ account: RiotAccount; matches: MatchDetail[] }> => {
   const account = await fetchRiotAccount(gameName, tagLine, platform, apiKey);
   const globalRegion = getGlobalRegion(platform);
@@ -267,7 +244,7 @@ export const fetchFullSummonerAnalysis = async (
   }
 
   const matchPromises = matchIds.map((id) =>
-    fetchMatchDetail(id, globalRegion, account.puuid, apiKey).catch(() => null)
+    fetchMatchDetail(id, globalRegion, account.puuid, apiKey, targetRank).catch(() => null)
   );
 
   const rawMatches = await Promise.all(matchPromises);

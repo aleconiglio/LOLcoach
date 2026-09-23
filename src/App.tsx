@@ -93,7 +93,8 @@ export const App: React.FC = () => {
           formData.matchCount,
           formData.roleFilter,
           formData.championFilter,
-          settings.riotApiKey
+          settings.riotApiKey,
+          formData.targetRank
         );
 
         setMatches(fetchedMatches);

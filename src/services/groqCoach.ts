@@ -1,46 +1,58 @@
 import { Groq } from 'groq-sdk';
 import { MatchDetail, TargetRank, AIAnalysisReport } from '../types';
 import { getBenchmarkForRank } from './benchmarks';
+import { getBuildItemNames } from './itemData';
 
-const SYSTEM_PROMPT = `Eres un Coach de Élite de League of Legends de nivel Challenger / Analista LCK/LCS/LEC.
-Tu objetivo es analizar cuantitativa y cualitativamente el rendimiento de un jugador comparándolo contra el benchmark de su RANGO OBJETIVO.
+const SYSTEM_PROMPT = `Eres el Head Coach de League of Legends de nivel Challenger / Analista Principal de LCK y LEC.
+Tu tarea es realizar una auditoría técnica profunda y un diagnóstico hiper-específico del rendimiento del jugador, evaluando cómo cerrar la brecha con el benchmark de su RANGO OBJETIVO.
+
+PROHIBICIONES ESTRICTAS (REGLA DE TOLERANCIA CERO A CONSEJOS GENÉRICOS):
+- Queda TERMINANTEMENTE PROHIBIDO dar consejos vagos, superficiales o clichés como: "mejora tu visión", "farmea mejor tras el min 15", "ten cuidado con los ganks", "posiciónate mejor", "ajusta tu build", o "compra más pinks".
+- Cualquier sugerencia debe contener detalles de ejecución mecánicos, estratégicos y tácticos EXACTOS.
+
+DIRECTIVAS OBLIGATORIAS DE HIPER-ESPECIFICIDAD:
+1. MECÁNICAS Y HABILIDADES EXACTAS: Menciona siempre los nombres o teclas de las habilidades (Q, W, E, R, Pasiva), combos específicos y enfriamientos clave tanto del campeón del jugador como de su oponente directo de carril (por ejemplo: "Usa el Charm/E de Ahri de forma reactiva sólo tras confirmar que Zed ha usado su W", "Castiga los 16s de enfriamiento de la E de Syndra para tradear").
+2. CONTROL DE OLEADAS Y TIMINGS DE RECALL: Describe la técnica de oleada precisa (Slow Push, Fast Push, Crash, Freeze, Bounce), el número de oleada y el minuto exacto (por ejemplo: "Slow push en oleadas 1 y 2 para lograr Crash en la 3ª oleada con súbdito de cañón al minuto 3:15 y ejecutar un Cheater Recall con 450+ de oro sin perder experiencia").
+3. ITEMIZACIÓN ADAPTATIVA Y PICOS DE PODER: Especifica los nombres exactos de los objetos y componentes tácticos (ej. Malignidad, Botas Blindadas, Reloj de Arena de Zhonya, Llamada del Verdugo a 800g, El Coleccionista, Cielo Desgarrado), justificando por qué contrarrestan el daño o la build del rival.
+4. MACRO Y ROTACIONES POST MINUTO 15: No te limites a decir "farmea". Explica qué línea lateral tomar (top o bot según Teleport y objetivo activo: Dragón vs Barón/Larvas), hasta qué punto empujar (altura del río) y cuándo colapsar.
+5. VISIÓN CON MINUTO Y LOCALIZACIÓN GEOGRÁFICA: Especifica el arbusto exacto (pixel bush de río, tribush, cruce de raptores enemigos, foso de Dragón) y el minuto clave (minuto 2:40 para detectar el gank de nivel 3 del jungla rival; 60 segundos antes del spawn de Dragón o Barón).
 
 Debes responder ÚNICAMENTE con un objeto JSON estrictamente válido, sin introducciones ni textos extra fuera del JSON.
 
 Estructura obligatoria del JSON:
 {
   "coachingGrade": "S" | "A+" | "A" | "A-" | "B+" | "B" | "C",
-  "summaryText": "Resumen ejecutivo del desempeño general y potencial de ascenso",
+  "summaryText": "Resumen ejecutivo analítico y directo sobre el potencial de ascenso y los 2 mayores diferenciales técnicos observados",
   "strengths": [
     {
-      "title": "Nombre corto de la fortaleza",
-      "description": "Explicación detallada con contexto estratégico",
+      "title": "Nombre técnico de la fortaleza (ej. Conversión de Daño con Power Spike de 1 Ítem)",
+      "description": "Explicación detallada con contexto estratégico y de campeón",
       "metric": "Dato o métrica numérica destacada"
     }
   ],
   "criticalErrors": [
     {
-      "title": "Nombre del error crítico",
-      "description": "Explicación de cómo este error cuesta partidas o impide subir de rango",
+      "title": "Nombre técnico del error (ej. Vulnerabilidad a Ganks de Nivel 3 en Minuto 2:45-3:30)",
+      "description": "Explicación táctica detallada de por qué este error cuesta la partida o el control del carril",
       "impact": "CRÍTICO" | "ALTO" | "MEDIO",
-      "recommendation": "Solución técnica concreta"
+      "recommendation": "Instrucción de corrección técnica hiper-específica (mencionando habilidades, oleadas u objetos exactos)"
     }
   ],
   "actionPlan": [
     {
       "step": 1,
-      "objective": "Objetivo cuantificable para la próxima partida",
-      "howToExecute": "Instrucción paso a paso de cómo ejecutarlo en juego",
-      "targetMetric": "Métrica meta a lograr"
+      "objective": "Objetivo técnico cuantificable para la próxima partida",
+      "howToExecute": "Instrucción paso a paso de ejecución en juego con timings, nombres de ítems/habilidades y posicionamiento",
+      "targetMetric": "Métrica meta exacta a lograr"
     }
   ]
 }
 
-REGLAS DE ANÁLISIS:
-1. Genera exactamente 3 Puntos Fuertes reales basados en las mejores métricas observadas.
-2. Genera exactamente 3 Errores Críticos enfocados en: control de oleadas, muertes tempranas/pre-objetivos, CS/min post min 15, visión o matchups.
-3. Genera un Plan de Acción Inmediato con 3 objetivos CONCRETOS y 100% aplicables en la siguiente partida.
-4. Redacta todo en español neutro, técnico y motivador.`;
+REGLAS DE FORMATO:
+- Genera exactamente 3 Puntos Fuertes basados en las métricas más destacadas.
+- Genera exactamente 3 Errores Críticos con soluciones técnicas detalladas.
+- Genera exactamente 3 pasos del Plan de Acción Inmediato.
+- Redacta todo en español neutro, técnico, incisivo y profesional.`;
 
 export const fetchLatestGroqModels = async (groqApiKey: string): Promise<string[]> => {
   const DEFAULT_FALLBACKS = [
@@ -139,15 +151,35 @@ export const generateGroqCoachAnalysis = async (
     kda: `${m.targetSummoner.kills}/${m.targetSummoner.deaths}/${m.targetSummoner.assists} (KDA: ${m.targetSummoner.kda})`,
     csPerMin: m.targetSummoner.csPerMin,
     damage: m.targetSummoner.totalDamageDealtToChampions,
+    goldEarned: m.targetSummoner.goldEarned,
+    itemsBuilt: getBuildItemNames([
+      m.targetSummoner.item0,
+      m.targetSummoner.item1,
+      m.targetSummoner.item2,
+      m.targetSummoner.item3,
+      m.targetSummoner.item4,
+      m.targetSummoner.item5,
+    ]),
     visionScore: m.targetSummoner.visionScore,
     opponentChampion: m.laneOpponent?.championName || 'Desconocido',
     opponentKDA: m.laneOpponent ? `${m.laneOpponent.kills}/${m.laneOpponent.deaths}/${m.laneOpponent.assists}` : 'N/A',
     opponentCSPerMin: m.laneOpponent?.csPerMin || 'N/A',
+    opponentDamage: m.laneOpponent?.totalDamageDealtToChampions || 'N/A',
+    opponentItemsBuilt: m.laneOpponent
+      ? getBuildItemNames([
+          m.laneOpponent.item0,
+          m.laneOpponent.item1,
+          m.laneOpponent.item2,
+          m.laneOpponent.item3,
+          m.laneOpponent.item4,
+          m.laneOpponent.item5,
+        ])
+      : [],
     timeline: {
       csAt10: m.timelineHighlights?.csAt10,
       csAt15: m.timelineHighlights?.csAt15,
       deathsBefore15: m.timelineHighlights?.deathsBefore15,
-      firstDeathMin: m.timelineHighlights?.firstDeathTimeMin || 'Ninguna',
+      firstDeathMin: m.timelineHighlights?.firstDeathTimeMin !== undefined ? `${m.timelineHighlights.firstDeathTimeMin}m` : 'Ninguna',
     }
   }));
 

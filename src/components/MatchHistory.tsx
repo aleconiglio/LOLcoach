@@ -19,6 +19,51 @@ interface MatchHistoryProps {
   matches: MatchDetail[];
 }
 
+const parseAdviceTip = (tip: string) => {
+  const match = tip.match(/^\[(.*?)\]\s*(.*)$/);
+  if (match) {
+    return { tag: match[1], content: match[2] };
+  }
+  return { tag: 'CONSEJO TÁCTICO', content: tip };
+};
+
+const getCategoryStyle = (tag: string) => {
+  const upper = tag.toUpperCase();
+  if (upper.includes('MATCHUP') || upper.includes('LÍNEA')) {
+    return {
+      badgeClass: 'bg-rose-950/80 text-rose-300 border-rose-500/40',
+      borderClass: 'border-rose-500/30 hover:border-rose-500/60',
+      icon: <Swords className="w-3 h-3 text-rose-400" />,
+    };
+  }
+  if (upper.includes('OLEADA') || upper.includes('MACRO') || upper.includes('FARM')) {
+    return {
+      badgeClass: 'bg-cyan-950/80 text-cyan-300 border-cyan-500/40',
+      borderClass: 'border-cyan-500/30 hover:border-cyan-500/60',
+      icon: <Clock className="w-3 h-3 text-cyan-400" />,
+    };
+  }
+  if (upper.includes('BUILD') || upper.includes('SPIKE') || upper.includes('ITEM')) {
+    return {
+      badgeClass: 'bg-amber-950/80 text-amber-300 border-amber-500/40',
+      borderClass: 'border-amber-500/30 hover:border-amber-500/60',
+      icon: <Award className="w-3 h-3 text-amber-400" />,
+    };
+  }
+  if (upper.includes('VISIÓN') || upper.includes('OBJETIVO')) {
+    return {
+      badgeClass: 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40',
+      borderClass: 'border-emerald-500/30 hover:border-emerald-500/60',
+      icon: <Eye className="w-3 h-3 text-emerald-400" />,
+    };
+  }
+  return {
+    badgeClass: 'bg-hextech-gold/20 text-hextech-gold-light border-hextech-gold/40',
+    borderClass: 'border-hextech-gold/30 hover:border-hextech-gold/60',
+    icon: <Target className="w-3 h-3 text-hextech-gold" />,
+  };
+};
+
 export const MatchHistory: React.FC<MatchHistoryProps> = ({ matches }) => {
   const [expandedMatchId, setExpandedMatchId] = useState<string | null>(
     matches && matches.length > 0 ? matches[0].matchId : null
@@ -199,19 +244,31 @@ export const MatchHistory: React.FC<MatchHistoryProps> = ({ matches }) => {
                       <span>CONSEJOS TÁCTICOS ESPECÍFICOS DE ESTA PARTIDA</span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                       {m.specificAdvice && m.specificAdvice.length > 0 ? (
-                        m.specificAdvice.map((tip, tIdx) => (
-                          <div
-                            key={tIdx}
-                            className="p-3 bg-hextech-navy/90 rounded border border-hextech-gold/25 text-xs text-gray-200 leading-relaxed font-sans flex items-start gap-2"
-                          >
-                            <span className="w-5 h-5 rounded-full bg-hextech-gold/20 text-hextech-gold font-mono font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
-                              {tIdx + 1}
-                            </span>
-                            <span>{tip}</span>
-                          </div>
-                        ))
+                        m.specificAdvice.map((tip, tIdx) => {
+                          const { tag, content } = parseAdviceTip(tip);
+                          const style = getCategoryStyle(tag);
+                          return (
+                            <div
+                              key={tIdx}
+                              className={`p-3.5 bg-hextech-navy/95 rounded-lg border ${style.borderClass} text-xs text-gray-200 leading-relaxed font-sans space-y-2 transition-all shadow-md`}
+                            >
+                              <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-2">
+                                <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider font-cinzel ${style.badgeClass}`}>
+                                  {style.icon}
+                                  {tag}
+                                </span>
+                                <span className="w-5 h-5 rounded-full bg-hextech-black/60 text-hextech-gold font-mono font-bold text-[10px] flex items-center justify-center shrink-0 border border-hextech-gold/30">
+                                  #{tIdx + 1}
+                                </span>
+                              </div>
+                              <p className="text-gray-300 leading-relaxed font-sans text-[11px] md:text-xs">
+                                {content}
+                              </p>
+                            </div>
+                          );
+                        })
                       ) : (
                         <div className="p-3 bg-hextech-navy/90 rounded text-xs text-gray-300">
                           Conserva el farm en min 15+ y mantén el control de wards defensivos.
