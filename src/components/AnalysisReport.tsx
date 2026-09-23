@@ -19,6 +19,10 @@ interface AnalysisReportProps {
 export const AnalysisReport: React.FC<AnalysisReportProps> = ({ report, targetRank }) => {
   if (!report) return null;
 
+  const strengths = Array.isArray(report.strengths) ? report.strengths : [];
+  const criticalErrors = Array.isArray(report.criticalErrors) ? report.criticalErrors : [];
+  const actionPlan = Array.isArray(report.actionPlan) ? report.actionPlan : [];
+
   return (
     <div className="space-y-6 animate-fade-in">
       
@@ -76,7 +80,7 @@ export const AnalysisReport: React.FC<AnalysisReportProps> = ({ report, targetRa
             </div>
 
             <div className="space-y-3.5">
-              {report.strengths.map((item, idx) => (
+              {strengths.map((item, idx) => (
                 <div
                   key={idx}
                   className="p-3 bg-emerald-950/20 rounded border border-emerald-500/20 hover:border-emerald-500/40 transition-colors"
@@ -116,7 +120,7 @@ export const AnalysisReport: React.FC<AnalysisReportProps> = ({ report, targetRa
             </div>
 
             <div className="space-y-3.5">
-              {report.criticalErrors.map((item, idx) => (
+              {criticalErrors.map((item, idx) => (
                 <div
                   key={idx}
                   className="p-3 bg-rose-950/20 rounded border border-rose-500/20 hover:border-rose-500/40 transition-colors"
@@ -164,7 +168,7 @@ export const AnalysisReport: React.FC<AnalysisReportProps> = ({ report, targetRa
             </div>
 
             <div className="space-y-3.5">
-              {report.actionPlan.map((item) => (
+              {actionPlan.map((item) => (
                 <div
                   key={item.step}
                   className="p-3.5 bg-hextech-navy/80 rounded border border-hextech-gold/30 hover:border-hextech-gold transition-all relative"

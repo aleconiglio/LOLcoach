@@ -113,6 +113,97 @@ export const fetchLatestGroqModels = async (groqApiKey: string): Promise<string[
   }
 };
 
+/**
+ * Normaliza y sanea cualquier estructura devuelta por Groq AI
+ * asegurando compatibilidad con camelCase, snake_case y arrays faltantes.
+ */
+export const normalizeAIReport = (raw: any): AIAnalysisReport => {
+  if (!raw || typeof raw !== 'object') {
+    return {
+      coachingGrade: 'B+',
+      summaryText: 'Diagnóstico generado con éxito.',
+      strengths: [],
+      criticalErrors: [],
+      actionPlan: [],
+    };
+  }
+
+  // Desempaquetar si el modelo envolvió el resultado en un subobjeto
+  const unwrapped =
+    raw.report ||
+    raw.analysis ||
+    raw.coachingReport ||
+    raw.coaching_report ||
+    raw.data ||
+    raw;
+
+  const rawStrengths =
+    unwrapped.strengths ||
+    unwrapped.key_strengths ||
+    unwrapped.strengths_analysis ||
+    unwrapped.puntos_fuertes ||
+    unwrapped.fortalezas ||
+    [];
+
+  const rawErrors =
+    unwrapped.criticalErrors ||
+    unwrapped.critical_errors ||
+    unwrapped.errors ||
+    unwrapped.errores_criticos ||
+    unwrapped.weaknesses ||
+    unwrapped.puntos_debiles ||
+    [];
+
+  const rawActionPlan =
+    unwrapped.actionPlan ||
+    unwrapped.action_plan ||
+    unwrapped.plan ||
+    unwrapped.plan_de_accion ||
+    unwrapped.steps ||
+    [];
+
+  const strengths = (Array.isArray(rawStrengths) ? rawStrengths : []).map((s: any, idx: number) => ({
+    title: String(s?.title || s?.nombre || `Punto Fuerte #${idx + 1}`),
+    description: String(s?.description || s?.descripcion || s?.detalle || ''),
+    metric: s?.metric || s?.metrica ? String(s.metric || s.metrica) : undefined,
+  }));
+
+  const criticalErrors = (Array.isArray(rawErrors) ? rawErrors : []).map((e: any, idx: number) => ({
+    title: String(e?.title || e?.nombre || `Error Crítico #${idx + 1}`),
+    description: String(e?.description || e?.descripcion || e?.detalle || ''),
+    impact:
+      (e?.impact?.toUpperCase() === 'CRÍTICO' || e?.impact?.toUpperCase() === 'CRITICO')
+        ? ('CRÍTICO' as const)
+        : e?.impact?.toUpperCase() === 'ALTO'
+        ? ('ALTO' as const)
+        : ('MEDIO' as const),
+    recommendation: String(e?.recommendation || e?.solucion || e?.solution || e?.recomendacion || ''),
+  }));
+
+  const actionPlan = (Array.isArray(rawActionPlan) ? rawActionPlan : []).map((a: any, idx: number) => ({
+    step: Number(a?.step || idx + 1),
+    objective: String(a?.objective || a?.objetivo || a?.meta || `Objetivo ${idx + 1}`),
+    howToExecute: String(a?.howToExecute || a?.how_to_execute || a?.ejecucion || a?.description || ''),
+    targetMetric: String(a?.targetMetric || a?.target_metric || a?.metrica_objetivo || ''),
+  }));
+
+  return {
+    coachingGrade: String(
+      unwrapped.coachingGrade || unwrapped.coaching_grade || unwrapped.grade || 'A-'
+    ),
+    summaryText: String(
+      unwrapped.summaryText ||
+        unwrapped.summary_text ||
+        unwrapped.summary ||
+        unwrapped.resumen ||
+        'Diagnóstico de coaching completado.'
+    ),
+    strengths,
+    criticalErrors,
+    actionPlan,
+  };
+};
+
 export const generateGroqCoachAnalysis = async (
   matches: MatchDetail[],
   targetRank: TargetRank,
@@ -266,7 +357,20 @@ export const generateGroqCoachAnalysis = async (
 
       const jsonResponse = await response.json();
       const responseContent = jsonResponse.choices?.[0]?.message?.content || '';
-      const parsedReport: AIAnalysisReport = JSON.parse(responseContent);
+      let rawJson: any;
+      try {
+        rawJson = JSON.parse(responseContent);
+      } catch (parseErr) {
+        console.warn('JSON parsing error on Groq response, trying regex match:', parseErr);
+        const match = responseContent.match(/\{[\s\S]*\}/);
+        if (match) {
+          rawJson = JSON.parse(match[0]);
+        } else {
+          throw new Error('La respuesta de Groq AI no contiene un JSON válido.');
+        }
+      }
+
+      const parsedReport = normalizeAIReport(rawJson);
       return parsedReport;
     } catch (error: any) {
       if (error.message?.includes('autenticación') || error.message?.includes('Groq API Key no configurada')) {

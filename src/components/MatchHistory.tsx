@@ -248,7 +248,7 @@ export const MatchHistory: React.FC<MatchHistoryProps> = ({ matches }) => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                      {m.specificAdvice && m.specificAdvice.length > 0 ? (
+                      {Array.isArray(m.specificAdvice) && m.specificAdvice.length > 0 ? (
                         m.specificAdvice.map((tip, tIdx) => {
                           const { tag, content } = parseAdviceTip(tip);
                           const style = getCategoryStyle(tag);

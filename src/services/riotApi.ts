@@ -237,9 +237,10 @@ export const fetchFullSummonerAnalysis = async (
   
   // Request slightly more match IDs to allow for champion/role/remake filtering
   const requestCount = Math.min(championFilter || roleFilter !== 'ALL' ? count * 3 : count + 6, 40);
-  const matchIds = await fetchMatchIds(account.puuid, globalRegion, requestCount, apiKey);
+  const rawMatchIds = await fetchMatchIds(account.puuid, globalRegion, requestCount, apiKey);
+  const matchIds = Array.isArray(rawMatchIds) ? rawMatchIds : [];
 
-  if (!matchIds || matchIds.length === 0) {
+  if (matchIds.length === 0) {
     throw new Error('No se encontraron partidas Ranked Solo/Duo recientes para este invocador.');
   }
 
