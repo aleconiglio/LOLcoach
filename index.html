@@ -8,6 +8,28 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <script>
+      // Detect stale chunk errors or script loading failures after new deployments
+      window.addEventListener('vite:preloadError', function() {
+        window.location.reload();
+      });
+      window.addEventListener('error', function(e) {
+        if (e && e.target && e.target.tagName === 'SCRIPT') {
+          var root = document.getElementById('root');
+          if (root && (!root.innerHTML || root.innerHTML.trim() === '')) {
+            root.innerHTML = '<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;text-align:center;color:#f0e6d2;background:#010a13;font-family:sans-serif;">' +
+              '<div style="max-width:440px;padding:24px;border:1px solid #c89b3c;border-radius:8px;background:#091428;">' +
+              '<h2 style="color:#c89b3c;font-size:1.25rem;margin:0 0 12px 0;font-weight:bold;">Actualización Detectada</h2>' +
+              '<p style="color:#a09b8c;font-size:0.875rem;margin:0 0 20px 0;line-height:1.5;">Tu navegador tenía cargada una versión previa en caché. Haz clic abajo para recargar la versión más reciente.</p>' +
+              '<button onclick="location.reload(true)" style="background:#c89b3c;color:#010a13;font-weight:bold;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;font-size:0.875rem;">RECARGAR AHORA (Ctrl + F5)</button>' +
+              '</div></div>';
+          }
+        }
+      }, true);
+    </script>
   </head>
   <body class="bg-hextech-black text-gray-100 antialiased overflow-x-hidden">
     <div id="root"></div>
