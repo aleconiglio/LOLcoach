@@ -3,12 +3,7 @@ import { AIAnalysisReport, TargetRank } from '../types';
 import { 
   Sparkles, 
   CheckCircle2, 
-  AlertTriangle, 
-  Target, 
-  Award, 
-  ArrowRight, 
-  Zap, 
-  ShieldAlert 
+  AlertTriangle 
 } from 'lucide-react';
 
 interface AnalysisReportProps {
@@ -21,7 +16,6 @@ export const AnalysisReport: React.FC<AnalysisReportProps> = ({ report, targetRa
 
   const strengths = Array.isArray(report.strengths) ? report.strengths : [];
   const criticalErrors = Array.isArray(report.criticalErrors) ? report.criticalErrors : [];
-  const actionPlan = Array.isArray(report.actionPlan) ? report.actionPlan : [];
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -61,8 +55,8 @@ export const AnalysisReport: React.FC<AnalysisReportProps> = ({ report, targetRa
         </div>
       </div>
 
-      {/* 3 Main Visual Cards Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* 2 Main Visual Cards Grid: 50% / 50% width to reduce vertical height */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
         {/* CARD 1: Puntos Fuertes (Fortalezas) */}
         <div className="hextech-card rounded-lg p-5 border border-emerald-500/30 flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-emerald-500/60 transition-all">
@@ -83,10 +77,10 @@ export const AnalysisReport: React.FC<AnalysisReportProps> = ({ report, targetRa
               {strengths.map((item, idx) => (
                 <div
                   key={idx}
-                  className="p-3 bg-emerald-950/20 rounded border border-emerald-500/20 hover:border-emerald-500/40 transition-colors"
+                  className="p-3.5 bg-emerald-950/20 rounded border border-emerald-500/20 hover:border-emerald-500/40 transition-colors"
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <h4 className="text-xs font-bold text-emerald-200 font-cinzel">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <h4 className="text-xs md:text-sm font-bold text-emerald-200 font-cinzel">
                       {item.title}
                     </h4>
                   </div>
@@ -123,10 +117,10 @@ export const AnalysisReport: React.FC<AnalysisReportProps> = ({ report, targetRa
               {criticalErrors.map((item, idx) => (
                 <div
                   key={idx}
-                  className="p-3 bg-rose-950/20 rounded border border-rose-500/20 hover:border-rose-500/40 transition-colors"
+                  className="p-3.5 bg-rose-950/20 rounded border border-rose-500/20 hover:border-rose-500/40 transition-colors"
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <h4 className="text-xs font-bold text-rose-200 font-cinzel">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <h4 className="text-xs md:text-sm font-bold text-rose-200 font-cinzel">
                       {item.title}
                     </h4>
                     <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded ${
@@ -142,55 +136,9 @@ export const AnalysisReport: React.FC<AnalysisReportProps> = ({ report, targetRa
                   <p className="text-xs text-gray-300 leading-relaxed mb-2 font-sans">
                     {item.description}
                   </p>
-                  <div className="p-2 bg-hextech-black/60 rounded border border-rose-500/30 text-[11px] text-rose-200">
+                  <div className="p-2.5 bg-hextech-black/60 rounded border border-rose-500/30 text-[11px] text-rose-200">
                     <strong className="text-rose-400 font-cinzel">Solución: </strong>
                     {item.recommendation}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* CARD 3: Plan de Acción Inmediato (3 Objetivos Próxima Partida) */}
-        <div className="hextech-card rounded-lg p-5 border border-hextech-gold/40 flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-hextech-gold transition-all">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 pb-3 border-b border-hextech-gold/20">
-              <div className="p-2 rounded bg-hextech-navy text-hextech-gold border border-hextech-gold/40">
-                <Target className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-cinzel font-bold text-hextech-gold text-base">
-                  3. PLAN DE ACCIÓN INMEDIATO
-                </h3>
-                <span className="text-[11px] text-gray-400">3 Objetivos concretos para la próxima partida</span>
-              </div>
-            </div>
-
-            <div className="space-y-3.5">
-              {actionPlan.map((item) => (
-                <div
-                  key={item.step}
-                  className="p-3.5 bg-hextech-navy/80 rounded border border-hextech-gold/30 hover:border-hextech-gold transition-all relative"
-                >
-                  <div className="flex items-center gap-2.5 mb-1.5">
-                    <span className="w-6 h-6 rounded-full bg-gradient-to-tr from-hextech-gold-dark to-hextech-gold text-hextech-black font-extrabold text-xs flex items-center justify-center font-cinzel shrink-0">
-                      {item.step}
-                    </span>
-                    <h4 className="text-xs font-bold text-hextech-gold-light font-cinzel">
-                      {item.objective}
-                    </h4>
-                  </div>
-                  
-                  <p className="text-xs text-gray-300 leading-relaxed mb-2 pl-8 font-sans">
-                    {item.howToExecute}
-                  </p>
-                  
-                  <div className="pl-8">
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-hextech-cyan bg-hextech-black/60 px-2 py-0.5 rounded border border-hextech-cyan/30 font-mono">
-                      <Zap className="w-3 h-3 text-hextech-cyan" />
-                      Meta: {item.targetMetric}
-                    </span>
                   </div>
                 </div>
               ))}
