@@ -55,29 +55,28 @@ REGLAS DE FORMATO:
 - Redacta todo en español neutro, técnico, incisivo y profesional.`;
 
 export const fetchLatestGroqModels = async (groqApiKey: string): Promise<string[]> => {
-  const DEFAULT_FALLBACKS = [
+  const PREFERRED_ORDER = [
     'llama-3.3-70b-versatile',
-    'llama-3.1-70b-versatile',
     'llama-3.1-8b-instant',
-    'deepseek-r1-distill-llama-70b',
+    'llama-3.1-70b-versatile',
+    'mixtral-8x7b-32768',
   ];
 
-  if (!groqApiKey || groqApiKey.trim() === '') return DEFAULT_FALLBACKS;
+  if (!groqApiKey || groqApiKey.trim() === '') return PREFERRED_ORDER;
 
   try {
-    console.log('Consultando la lista de modelos de Groq en https://api.groq.com/openai/v1/models...');
     const res = await fetch('https://api.groq.com/openai/v1/models', {
       headers: {
         'Authorization': `Bearer ${groqApiKey.trim()}`,
       },
     });
 
-    if (!res.ok) return DEFAULT_FALLBACKS;
+    if (!res.ok) return PREFERRED_ORDER;
 
     const data = await res.json();
     const modelsList: any[] = data.data || [];
 
-    // Filter active chat/completion models
+    // Filter active chat/completion models that support json mode
     const chatModels = modelsList.filter((m) => {
       const id = (m.id || '').toLowerCase();
       return (
@@ -87,18 +86,30 @@ export const fetchLatestGroqModels = async (groqApiKey: string): Promise<string[
         !id.includes('vision') &&
         !id.includes('embed') &&
         !id.includes('audio') &&
-        !id.includes('tts')
+        !id.includes('tts') &&
+        !id.includes('safeguard')
       );
     });
 
-    // Sort by created timestamp descending (most recent first)
-    chatModels.sort((a, b) => (b.created || 0) - (a.created || 0));
+    const apiModelIds = chatModels.map((m) => m.id);
+    const sortedList: string[] = [];
 
-    const sortedIds = chatModels.map((m) => m.id);
-    return sortedIds.length > 0 ? sortedIds : DEFAULT_FALLBACKS;
+    // Prioritize proven high-capacity models first
+    for (const pref of PREFERRED_ORDER) {
+      if (apiModelIds.includes(pref)) {
+        sortedList.push(pref);
+      }
+    }
+    for (const id of apiModelIds) {
+      if (!sortedList.includes(id)) {
+        sortedList.push(id);
+      }
+    }
+
+    return sortedList.length > 0 ? sortedList : PREFERRED_ORDER;
   } catch (err) {
     console.warn('Error al consultar https://api.groq.com/openai/v1/models:', err);
-    return DEFAULT_FALLBACKS;
+    return PREFERRED_ORDER;
   }
 };
 
@@ -187,6 +198,10 @@ export const generateGroqCoachAnalysis = async (
     }
   }));
 
+  // Cap detailed per-match breakdown to the 5 most recent matches to prevent Groq TPM / token limit overflow
+  // (Overall aggregate stats already cover all games comprehensively)
+  const detailedMatches = matchSummaries.slice(0, 5);
+
   const userPromptPayload = {
     targetRankBenchmark: benchmark,
     playerAggregateStats: {
@@ -198,16 +213,16 @@ export const generateGroqCoachAnalysis = async (
       avgDamageDealt: avgDamage,
       avgDeathsBefore15: avgDeathsEarly,
     },
-    matchesDetail: matchSummaries,
+    matchesDetail: detailedMatches,
   };
 
-  // Dynamically fetch and sort active models by created timestamp (newest first)
+  // Dynamically fetch and sort active models with high-capacity models prioritized
   const candidateModels = await fetchLatestGroqModels(groqApiKey);
   let lastErrorMessage = '';
 
   for (const modelToUse of candidateModels) {
     try {
-      console.log(`Llamando a Groq API (https://api.groq.com/openai/v1/chat/completions) usando el modelo más reciente: ${modelToUse}...`);
+      console.log(`Llamando a Groq API (https://api.groq.com/openai/v1/chat/completions) usando modelo: ${modelToUse}...`);
 
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -220,15 +235,14 @@ export const generateGroqCoachAnalysis = async (
             { role: 'system', content: SYSTEM_PROMPT },
             {
               role: 'user',
-              content: `Realiza el diagnóstico de coaching para el siguiente perfil de partidas de League of Legends:\n\n${JSON.stringify(
-                userPromptPayload,
-                null,
-                2
+              content: `Realiza el diagnóstico de coaching para el siguiente perfil de partidas de League of Legends:\n${JSON.stringify(
+                userPromptPayload
               )}`,
             },
           ],
           model: modelToUse,
           temperature: 0.3,
+          max_tokens: 1500,
           response_format: { type: 'json_object' },
         }),
       });
@@ -241,7 +255,12 @@ export const generateGroqCoachAnalysis = async (
         const errorJson = await response.json().catch(() => ({}));
         const message = errorJson?.error?.message || `Error HTTP ${response.status}`;
         lastErrorMessage = message;
-        console.warn(`El modelo ${modelToUse} devolvió error HTTP ${response.status} (${message}). Reintentando con el siguiente modelo más reciente...`);
+        console.warn(`El modelo ${modelToUse} devolvió error HTTP ${response.status} (${message}).`);
+
+        // Si el error es por límite de longitud o tokens por minuto (TPM), reducir aún más las partidas y reintentar
+        if (message.includes('reduce the length') || message.includes('rate_limit') || message.includes('TPM')) {
+          userPromptPayload.matchesDetail = matchSummaries.slice(0, 2);
+        }
         continue;
       }
 
