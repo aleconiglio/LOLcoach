@@ -14,8 +14,49 @@ interface AnalysisReportProps {
 export const AnalysisReport: React.FC<AnalysisReportProps> = ({ report, targetRank }) => {
   if (!report) return null;
 
-  const strengths = Array.isArray(report.strengths) ? report.strengths : [];
-  const criticalErrors = Array.isArray(report.criticalErrors) ? report.criticalErrors : [];
+  const raw = report as any;
+
+  // Extracción omnidireccional de fortalezas
+  const rawStrengthsList: any[] =
+    (Array.isArray(report.strengths) && report.strengths.length > 0 ? report.strengths : null) ||
+    (Array.isArray(raw.strengths) && raw.strengths.length > 0 ? raw.strengths : null) ||
+    (Array.isArray(raw.puntos_fuertes) && raw.puntos_fuertes.length > 0 ? raw.puntos_fuertes : null) ||
+    (Array.isArray(raw.fortalezas) && raw.fortalezas.length > 0 ? raw.fortalezas : null) ||
+    (Array.isArray(raw.key_strengths) && raw.key_strengths.length > 0 ? raw.key_strengths : null) ||
+    [];
+
+  const strengths = rawStrengthsList.map((s: any, idx: number) => ({
+    title: String(s?.title || s?.nombre || s?.titulo || `Punto Fuerte #${idx + 1}`),
+    description: String(s?.description || s?.descripcion || s?.detalle || ''),
+    metric: s?.metric || s?.metrica ? String(s.metric || s.metrica) : undefined,
+  }));
+
+  // Extracción omnidireccional de errores críticos (soporta camelCase, snake_case y español)
+  const rawErrorsList: any[] =
+    (Array.isArray(report.criticalErrors) && report.criticalErrors.length > 0 ? report.criticalErrors : null) ||
+    (Array.isArray(raw.criticalErrors) && raw.criticalErrors.length > 0 ? raw.criticalErrors : null) ||
+    (Array.isArray(raw.critical_errors) && raw.critical_errors.length > 0 ? raw.critical_errors : null) ||
+    (Array.isArray(raw.errores) && raw.errores.length > 0 ? raw.errores : null) ||
+    (Array.isArray(raw.errors) && raw.errors.length > 0 ? raw.errors : null) ||
+    (Array.isArray(raw.errores_criticos) && raw.errores_criticos.length > 0 ? raw.errores_criticos : null) ||
+    (Array.isArray(raw.debilidades) && raw.debilidades.length > 0 ? raw.debilidades : null) ||
+    (Array.isArray(raw.weaknesses) && raw.weaknesses.length > 0 ? raw.weaknesses : null) ||
+    (Array.isArray(raw.fallos) && raw.fallos.length > 0 ? raw.fallos : null) ||
+    (Array.isArray(raw.areas_de_mejora) && raw.areas_de_mejora.length > 0 ? raw.areas_de_mejora : null) ||
+    (Array.isArray(raw.aspectos_a_mejorar) && raw.aspectos_a_mejorar.length > 0 ? raw.aspectos_a_mejorar : null) ||
+    (Array.isArray(raw.puntos_debiles) && raw.puntos_debiles.length > 0 ? raw.puntos_debiles : null) ||
+    [];
+
+  const criticalErrors = rawErrorsList.map((e: any, idx: number) => ({
+    title: String(e?.title || e?.nombre || e?.titulo || e?.error || e?.fallo || `Error Crítico #${idx + 1}`),
+    description: String(e?.description || e?.descripcion || e?.detalle || e?.explicacion || e?.issue || ''),
+    impact: (String(e?.impact || e?.impacto || '').toUpperCase().includes('CRIT') || String(e?.impact || e?.impacto || '').toUpperCase() === 'CRÍTICO')
+      ? ('CRÍTICO' as const)
+      : (String(e?.impact || e?.impacto || '').toUpperCase() === 'ALTO')
+      ? ('ALTO' as const)
+      : ('MEDIO' as const),
+    recommendation: String(e?.recommendation || e?.solucion || e?.solution || e?.recomendacion || e?.remedio || e?.correccion || ''),
+  }));
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -114,34 +155,43 @@ export const AnalysisReport: React.FC<AnalysisReportProps> = ({ report, targetRa
             </div>
 
             <div className="space-y-3.5">
-              {criticalErrors.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="p-3.5 bg-rose-950/20 rounded border border-rose-500/20 hover:border-rose-500/40 transition-colors"
-                >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <h4 className="text-xs md:text-sm font-bold text-rose-200 font-cinzel">
-                      {item.title}
-                    </h4>
-                    <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded ${
-                      item.impact === 'CRÍTICO' 
-                        ? 'bg-rose-600 text-white' 
-                        : item.impact === 'ALTO' 
-                        ? 'bg-amber-600 text-white' 
-                        : 'bg-yellow-600 text-white'
-                    }`}>
-                      {item.impact}
-                    </span>
+              {criticalErrors.length > 0 ? (
+                criticalErrors.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3.5 bg-rose-950/20 rounded border border-rose-500/20 hover:border-rose-500/40 transition-colors"
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <h4 className="text-xs md:text-sm font-bold text-rose-200 font-cinzel">
+                        {item.title}
+                      </h4>
+                      <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded ${
+                        item.impact === 'CRÍTICO' 
+                          ? 'bg-rose-600 text-white' 
+                          : item.impact === 'ALTO' 
+                          ? 'bg-amber-600 text-white' 
+                          : 'bg-yellow-600 text-white'
+                      }`}>
+                        {item.impact}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-300 leading-relaxed mb-2 font-sans">
+                      {item.description}
+                    </p>
+                    <div className="p-2.5 bg-hextech-black/60 rounded border border-rose-500/30 text-[11px] text-rose-200">
+                      <strong className="text-rose-400 font-cinzel">Solución: </strong>
+                      {item.recommendation}
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-300 leading-relaxed mb-2 font-sans">
-                    {item.description}
+                ))
+              ) : (
+                <div className="p-4 bg-rose-950/20 rounded border border-rose-500/30 text-xs text-rose-200 space-y-2 font-sans">
+                  <p className="font-semibold text-rose-300 font-cinzel">Rendimiento Técnico Estable</p>
+                  <p className="text-gray-300 leading-relaxed">
+                    No se detectaron fallos mecánicos ni tácticos graves en este bloque de partidas analizadas.
                   </p>
-                  <div className="p-2.5 bg-hextech-black/60 rounded border border-rose-500/30 text-[11px] text-rose-200">
-                    <strong className="text-rose-400 font-cinzel">Solución: </strong>
-                    {item.recommendation}
-                  </div>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>

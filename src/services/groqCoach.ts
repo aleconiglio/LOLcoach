@@ -37,22 +37,14 @@ Estructura obligatoria del JSON:
       "impact": "CRÍTICO" | "ALTO" | "MEDIO",
       "recommendation": "Instrucción de corrección técnica hiper-específica (mencionando habilidades, oleadas u objetos exactos)"
     }
-  ],
-  "actionPlan": [
-    {
-      "step": 1,
-      "objective": "Objetivo técnico cuantificable para la próxima partida",
-      "howToExecute": "Instrucción paso a paso de ejecución en juego con timings, nombres de ítems/habilidades y posicionamiento",
-      "targetMetric": "Métrica meta exacta a lograr"
-    }
   ]
 }
 
 REGLAS DE FORMATO:
 - Genera exactamente 3 Puntos Fuertes basados en las métricas más destacadas.
 - Genera exactamente 3 Errores Críticos con soluciones técnicas detalladas.
-- Genera exactamente 3 pasos del Plan de Acción Inmediato.
-- Redacta todo en español neutro, técnico, incisivo y profesional.`;
+- OBLIGATORIO: Usa estrictamente los nombres de clave en inglés "strengths" y "criticalErrors" en el JSON.
+- Redacta el contenido en español neutro, técnico, incisivo y profesional.`;
 
 export const fetchLatestGroqModels = async (groqApiKey: string): Promise<string[]> => {
   const PREFERRED_ORDER = [
@@ -114,6 +106,25 @@ export const fetchLatestGroqModels = async (groqApiKey: string): Promise<string[
 };
 
 /**
+ * Helper para extraer listas de un objeto buscando nombres exactos o por expresiones regulares
+ */
+const extractListFromKeys = (obj: any, patterns: RegExp[]): any[] => {
+  if (!obj || typeof obj !== 'object') return [];
+  for (const k of Object.keys(obj)) {
+    for (const pat of patterns) {
+      if (pat.test(k)) {
+        const val = obj[k];
+        if (Array.isArray(val) && val.length > 0) return val;
+        if (val && typeof val === 'object' && Object.keys(val).length > 0) {
+          return Object.values(val);
+        }
+      }
+    }
+  }
+  return [];
+};
+
+/**
  * Normaliza y sanea cualquier estructura devuelta por Groq AI
  * asegurando compatibilidad con camelCase, snake_case y arrays faltantes.
  */
@@ -137,54 +148,68 @@ export const normalizeAIReport = (raw: any): AIAnalysisReport => {
     raw.data ||
     raw;
 
-  const rawStrengths =
+  const rawStrengthsCandidate =
     unwrapped.strengths ||
     unwrapped.key_strengths ||
     unwrapped.strengths_analysis ||
     unwrapped.puntos_fuertes ||
+    unwrapped.puntosFuertes ||
     unwrapped.fortalezas ||
-    [];
+    unwrapped.pros ||
+    unwrapped.aciertos ||
+    extractListFromKeys(unwrapped, [/strength/i, /fortaleza/i, /fuerte/i, /acierto/i, /pro/i]);
 
-  const rawErrors =
+  const rawErrorsCandidate =
     unwrapped.criticalErrors ||
     unwrapped.critical_errors ||
+    unwrapped.errores ||
     unwrapped.errors ||
     unwrapped.errores_criticos ||
+    unwrapped.erroresCriticos ||
     unwrapped.weaknesses ||
+    unwrapped.debilidades ||
+    unwrapped.fallos ||
+    unwrapped.mistakes ||
+    unwrapped.areas_de_mejora ||
+    unwrapped.areasDeMejora ||
+    unwrapped.aspectos_a_mejorar ||
+    unwrapped.aspectosAMejorar ||
     unwrapped.puntos_debiles ||
-    [];
+    unwrapped.puntosDebiles ||
+    unwrapped.puntos_de_dolor ||
+    unwrapped.puntosDeDolor ||
+    unwrapped.pain_points ||
+    unwrapped.painPoints ||
+    extractListFromKeys(unwrapped, [/error/i, /crit/i, /weak/i, /debil/i, /mejora/i, /fallo/i, /mistake/i, /dolor/i, /pain/i, /issue/i]);
 
-  const rawActionPlan =
-    unwrapped.actionPlan ||
-    unwrapped.action_plan ||
-    unwrapped.plan ||
-    unwrapped.plan_de_accion ||
-    unwrapped.steps ||
-    [];
+  const rawStrengths = Array.isArray(rawStrengthsCandidate)
+    ? rawStrengthsCandidate
+    : rawStrengthsCandidate && typeof rawStrengthsCandidate === 'object'
+    ? Object.values(rawStrengthsCandidate)
+    : [];
 
-  const strengths = (Array.isArray(rawStrengths) ? rawStrengths : []).map((s: any, idx: number) => ({
-    title: String(s?.title || s?.nombre || `Punto Fuerte #${idx + 1}`),
+  const rawErrors = Array.isArray(rawErrorsCandidate)
+    ? rawErrorsCandidate
+    : rawErrorsCandidate && typeof rawErrorsCandidate === 'object'
+    ? Object.values(rawErrorsCandidate)
+    : [];
+
+  const strengths = rawStrengths.map((s: any, idx: number) => ({
+    title: String(s?.title || s?.nombre || s?.titulo || `Punto Fuerte #${idx + 1}`),
     description: String(s?.description || s?.descripcion || s?.detalle || ''),
     metric: s?.metric || s?.metrica ? String(s.metric || s.metrica) : undefined,
   }));
 
-  const criticalErrors = (Array.isArray(rawErrors) ? rawErrors : []).map((e: any, idx: number) => ({
-    title: String(e?.title || e?.nombre || `Error Crítico #${idx + 1}`),
-    description: String(e?.description || e?.descripcion || e?.detalle || ''),
+  const criticalErrors = rawErrors.map((e: any, idx: number) => ({
+    title: String(e?.title || e?.nombre || e?.titulo || e?.error || e?.fallo || `Error Crítico #${idx + 1}`),
+    description: String(e?.description || e?.descripcion || e?.detalle || e?.explicacion || e?.contexto || ''),
     impact:
-      (e?.impact?.toUpperCase() === 'CRÍTICO' || e?.impact?.toUpperCase() === 'CRITICO')
+      (String(e?.impact || e?.impacto || '').toUpperCase().includes('CRIT') || String(e?.impact || e?.impacto || '').toUpperCase() === 'CRÍTICO')
         ? ('CRÍTICO' as const)
-        : e?.impact?.toUpperCase() === 'ALTO'
+        : String(e?.impact || e?.impacto || '').toUpperCase() === 'ALTO'
         ? ('ALTO' as const)
         : ('MEDIO' as const),
-    recommendation: String(e?.recommendation || e?.solucion || e?.solution || e?.recomendacion || ''),
-  }));
-
-  const actionPlan = (Array.isArray(rawActionPlan) ? rawActionPlan : []).map((a: any, idx: number) => ({
-    step: Number(a?.step || idx + 1),
-    objective: String(a?.objective || a?.objetivo || a?.meta || `Objetivo ${idx + 1}`),
-    howToExecute: String(a?.howToExecute || a?.how_to_execute || a?.ejecucion || a?.description || ''),
-    targetMetric: String(a?.targetMetric || a?.target_metric || a?.metrica_objetivo || ''),
+    recommendation: String(e?.recommendation || e?.solucion || e?.solution || e?.recomendacion || e?.remedio || e?.correccion || ''),
   }));
 
   return {
@@ -200,7 +225,7 @@ export const normalizeAIReport = (raw: any): AIAnalysisReport => {
     ),
     strengths,
     criticalErrors,
-    actionPlan,
+    actionPlan: [],
   };
 };
 
