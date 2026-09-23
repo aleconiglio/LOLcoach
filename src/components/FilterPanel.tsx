@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Globe, Shield, Trophy, User, Hash, Sword, Loader2, Sparkles, History, X } from 'lucide-react';
+import React from 'react';
+import { Search, Globe, Shield, Trophy, User, Hash, Sword, Loader2, Sparkles } from 'lucide-react';
 import { 
   SearchFormData, 
   PlatformRegion, 
@@ -7,7 +7,6 @@ import {
   TargetRank 
 } from '../types';
 import { ChampionSelect } from './ChampionSelect';
-import { getSavedSummoners, removeRecentSummoner, SavedSummoner } from '../services/storage';
 
 interface FilterPanelProps {
   formData: SearchFormData;
@@ -54,30 +53,6 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   onSubmit,
   isLoading,
 }) => {
-  const [savedSummoners, setSavedSummoners] = useState<SavedSummoner[]>([]);
-
-  useEffect(() => {
-    setSavedSummoners(getSavedSummoners());
-  }, [formData.gameName]);
-
-  const handleSelectSaved = (key: string) => {
-    if (!key) return;
-    const [name, tag, platform] = key.split(':::');
-    if (name && tag && platform) {
-      onChange({
-        gameName: name,
-        tagLine: tag,
-        platform: platform as PlatformRegion,
-      });
-    }
-  };
-
-  const handleRemoveSaved = (e: React.MouseEvent, s: SavedSummoner) => {
-    e.stopPropagation();
-    const updated = removeRecentSummoner(s.gameName, s.tagLine, s.platform);
-    setSavedSummoners(updated);
-  };
-
   return (
     <div className="hextech-card rounded-lg p-6 border border-hextech-gold/30 shadow-2xl relative z-30">
       
@@ -92,73 +67,6 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
       </div>
 
       <form onSubmit={onSubmit} className="space-y-4">
-
-        {/* Saved Summoners Quick Bar / Dropdown */}
-        {savedSummoners.length > 0 && (
-          <div className="p-3 bg-hextech-black/60 rounded-md border border-hextech-gold/25 space-y-2">
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <span className="text-xs font-bold text-hextech-gold font-cinzel flex items-center gap-1.5">
-                <History className="w-3.5 h-3.5 text-hextech-cyan" />
-                Invocadores Guardados en tu Navegador:
-              </span>
-              <select
-                value=""
-                onChange={(e) => handleSelectSaved(e.target.value)}
-                className="text-xs bg-hextech-navy border border-hextech-gold/40 rounded px-2.5 py-1 text-hextech-gold-light cursor-pointer font-sans"
-              >
-                <option value="">▼ Seleccionar Invocador Guardado...</option>
-                {savedSummoners.map((s, idx) => (
-                  <option
-                    key={idx}
-                    value={`${s.gameName}:::${s.tagLine}:::${s.platform}`}
-                    className="bg-hextech-dark text-gray-200"
-                  >
-                    {s.gameName} #{s.tagLine} ({s.platform})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-1.5">
-              {savedSummoners.map((s, idx) => {
-                const isSelected =
-                  formData.gameName.trim().toLowerCase() === s.gameName.toLowerCase() &&
-                  formData.tagLine.trim().toUpperCase() === s.tagLine.toUpperCase() &&
-                  formData.platform === s.platform;
-
-                return (
-                  <div
-                    key={`${s.gameName}-${s.tagLine}-${s.platform}-${idx}`}
-                    onClick={() =>
-                      onChange({
-                        gameName: s.gameName,
-                        tagLine: s.tagLine,
-                        platform: s.platform,
-                      })
-                    }
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded border text-xs cursor-pointer transition-all ${
-                      isSelected
-                        ? 'bg-hextech-gold/25 text-hextech-gold-light border-hextech-gold font-bold shadow-sm'
-                        : 'bg-hextech-navy/70 text-gray-300 border-hextech-gold/30 hover:border-hextech-gold hover:text-white'
-                    }`}
-                    title={`Cargar ${s.gameName}#${s.tagLine} (${s.platform})`}
-                  >
-                    <span>{s.gameName}#{s.tagLine}</span>
-                    <span className="text-[10px] text-hextech-cyan font-mono opacity-80">({s.platform})</span>
-                    <button
-                      type="button"
-                      onClick={(e) => handleRemoveSaved(e, s)}
-                      className="ml-0.5 hover:text-rose-400 text-gray-400 p-0.5 rounded transition-colors"
-                      title="Eliminar de la lista guardada"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
         
         {/* Grid 1: Game Name, TagLine, Region */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -175,16 +83,8 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               placeholder="Ej: Faker, Hide on bush"
               value={formData.gameName}
               onChange={(e) => onChange({ gameName: e.target.value })}
-              list="saved-summoners-datalist"
               className="hextech-input w-full px-3.5 py-2 text-sm rounded font-sans"
             />
-            <datalist id="saved-summoners-datalist">
-              {savedSummoners.map((s, idx) => (
-                <option key={idx} value={s.gameName}>
-                  #{s.tagLine} ({s.platform})
-                </option>
-              ))}
-            </datalist>
           </div>
 
           {/* Input 2: TagLine */}

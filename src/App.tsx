@@ -13,7 +13,7 @@ import {
   MatchDetail, 
   AIAnalysisReport 
 } from './types';
-import { getStoredSettings, saveStoredSettings, getSavedSummoners, saveRecentSummoner } from './services/storage';
+import { getStoredSettings, saveStoredSettings } from './services/storage';
 import { fetchFullSummonerAnalysis } from './services/riotApi';
 import { generateGroqCoachAnalysis } from './services/groqCoach';
 import { getMockMatches, getMockAIReport } from './services/mockData';
@@ -23,12 +23,10 @@ export const App: React.FC = () => {
   const [settings, setSettings] = useState<AppSettings>(getStoredSettings());
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  const initialSummoner = getSavedSummoners()[0];
-
   const [formData, setFormData] = useState<SearchFormData>({
-    gameName: initialSummoner?.gameName || '',
-    tagLine: initialSummoner?.tagLine || 'LAS',
-    platform: initialSummoner?.platform || 'LAS',
+    gameName: '',
+    tagLine: 'LAS',
+    platform: 'LAS',
     matchCount: 5,
     championFilter: '',
     roleFilter: 'ALL',
@@ -57,9 +55,6 @@ export const App: React.FC = () => {
       setErrorMessage('Por favor ingresa tanto el Nombre de Invocador como el TagLine.');
       return;
     }
-
-    // Save recent summoner in browser's localStorage
-    saveRecentSummoner(formData.gameName, formData.tagLine, formData.platform);
 
     // Check if we should execute in Demo Mode or Live Mode
     const hasKeys = !!settings.riotApiKey && !!settings.groqApiKey;
