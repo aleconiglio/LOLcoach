@@ -10,19 +10,23 @@ interface BenchmarkCardProps {
 
 export const BenchmarkCard: React.FC<BenchmarkCardProps> = ({ matches, targetRank }) => {
   const benchmark = getBenchmarkForRank(targetRank);
-  const total = Math.max(1, matches.length);
+
+  // Excluir partidas menores a 8 min (remakes) para no alterar las métricas promedio
+  const filtered = matches.filter((m) => (m.gameDuration || 0) >= 480);
+  const activeMatches = filtered.length > 0 ? filtered : matches;
+  const total = Math.max(1, activeMatches.length);
 
   const avgKDA = Number(
-    (matches.reduce((acc, m) => acc + m.targetSummoner.kda, 0) / total).toFixed(2)
+    (activeMatches.reduce((acc, m) => acc + m.targetSummoner.kda, 0) / total).toFixed(2)
   );
 
   const avgCSPerMin = Number(
-    (matches.reduce((acc, m) => acc + m.targetSummoner.csPerMin, 0) / total).toFixed(1)
+    (activeMatches.reduce((acc, m) => acc + m.targetSummoner.csPerMin, 0) / total).toFixed(1)
   );
 
   const avgVisionPerMin = Number(
     (
-      matches.reduce(
+      activeMatches.reduce(
         (acc, m) => acc + m.targetSummoner.visionScore / Math.max(1, m.gameDuration / 60),
         0
       ) / total
@@ -31,7 +35,7 @@ export const BenchmarkCard: React.FC<BenchmarkCardProps> = ({ matches, targetRan
 
   const avgEarlyDeaths = Number(
     (
-      matches.reduce(
+      activeMatches.reduce(
         (acc, m) => acc + (m.timelineHighlights?.deathsBefore15 || 0),
         0
       ) / total

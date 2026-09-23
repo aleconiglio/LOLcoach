@@ -113,37 +113,41 @@ export const generateGroqCoachAnalysis = async (
 
   const benchmark = getBenchmarkForRank(targetRank);
 
+  // Excluir partidas menores a 8 min (remakes) para no alterar las métricas
+  const filteredMatches = matches.filter((m) => (m.gameDuration || 0) >= 480);
+  const activeMatches = filteredMatches.length > 0 ? filteredMatches : matches;
+
   // Compute aggregate statistics
-  const totalMatches = matches.length;
-  const wins = matches.filter((m) => m.targetSummoner.win).length;
+  const totalMatches = activeMatches.length;
+  const wins = activeMatches.filter((m) => m.targetSummoner.win).length;
   const winRate = Math.round((wins / totalMatches) * 100);
 
   const avgKDA = Number(
-    (matches.reduce((acc, m) => acc + m.targetSummoner.kda, 0) / totalMatches).toFixed(2)
+    (activeMatches.reduce((acc, m) => acc + m.targetSummoner.kda, 0) / totalMatches).toFixed(2)
   );
 
   const avgCS = Number(
-    (matches.reduce((acc, m) => acc + m.targetSummoner.csPerMin, 0) / totalMatches).toFixed(1)
+    (activeMatches.reduce((acc, m) => acc + m.targetSummoner.csPerMin, 0) / totalMatches).toFixed(1)
   );
 
   const avgVision = Number(
     (
-      matches.reduce((acc, m) => acc + (m.targetSummoner.visionScore / (m.gameDuration / 60)), 0) /
+      activeMatches.reduce((acc, m) => acc + (m.targetSummoner.visionScore / (m.gameDuration / 60)), 0) /
       totalMatches
     ).toFixed(2)
   );
 
   const avgDamage = Math.round(
-    matches.reduce((acc, m) => acc + m.targetSummoner.totalDamageDealtToChampions, 0) / totalMatches
+    activeMatches.reduce((acc, m) => acc + m.targetSummoner.totalDamageDealtToChampions, 0) / totalMatches
   );
 
   const avgDeathsEarly = Number(
     (
-      matches.reduce((acc, m) => acc + (m.timelineHighlights?.deathsBefore15 || 0), 0) / totalMatches
+      activeMatches.reduce((acc, m) => acc + (m.timelineHighlights?.deathsBefore15 || 0), 0) / totalMatches
     ).toFixed(1)
   );
 
-  const matchSummaries = matches.map((m, idx) => ({
+  const matchSummaries = activeMatches.map((m, idx) => ({
     game: idx + 1,
     champion: m.targetSummoner.championName,
     role: m.targetSummoner.teamPosition,

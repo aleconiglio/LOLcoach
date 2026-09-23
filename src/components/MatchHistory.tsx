@@ -79,12 +79,15 @@ export const MatchHistory: React.FC<MatchHistoryProps> = ({ matches }) => {
     <div className="hextech-card rounded-lg p-5 border border-hextech-gold/30 shadow-xl space-y-4">
       
       {/* Title Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-hextech-gold/20">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col md:flex-row md:items-center justify-between pb-3 border-b border-hextech-gold/20 gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Swords className="w-5 h-5 text-hextech-gold" />
           <h3 className="font-cinzel font-bold text-hextech-gold text-base tracking-wider">
             HISTORIAL DE PARTIDAS ANALIZADAS ({matches.length})
           </h3>
+          <span className="text-[10px] text-gray-400 bg-hextech-navy/80 px-2 py-0.5 rounded border border-hextech-gold/20 font-mono">
+            Excluye remakes (&lt; 8 min)
+          </span>
         </div>
         <span className="text-xs text-hextech-cyan font-sans flex items-center gap-1">
           <Sparkles className="w-3.5 h-3.5" /> Haz clic en cualquier partida para desplegar consejos tácticos

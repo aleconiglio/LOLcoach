@@ -235,8 +235,8 @@ export const fetchFullSummonerAnalysis = async (
   const account = await fetchRiotAccount(gameName, tagLine, platform, apiKey);
   const globalRegion = getGlobalRegion(platform);
   
-  // Request slightly more match IDs to allow for champion/role filtering
-  const requestCount = championFilter || roleFilter !== 'ALL' ? Math.min(count * 3, 30) : count;
+  // Request slightly more match IDs to allow for champion/role/remake filtering
+  const requestCount = Math.min(championFilter || roleFilter !== 'ALL' ? count * 3 : count + 6, 40);
   const matchIds = await fetchMatchIds(account.puuid, globalRegion, requestCount, apiKey);
 
   if (!matchIds || matchIds.length === 0) {
@@ -249,6 +249,9 @@ export const fetchFullSummonerAnalysis = async (
 
   const rawMatches = await Promise.all(matchPromises);
   let validMatches = rawMatches.filter((m): m is MatchDetail => m !== null);
+
+  // Excluir partidas menores a 8 minutos (480 segundos) ya que son remakes y alteran las métricas
+  validMatches = validMatches.filter((m) => (m.gameDuration || 0) >= 480);
 
   // Apply Champion filter if provided
   if (championFilter.trim()) {
@@ -274,7 +277,7 @@ export const fetchFullSummonerAnalysis = async (
   const finalMatches = validMatches.slice(0, count);
 
   if (finalMatches.length === 0) {
-    throw new Error('No se encontraron partidas que coincidan con los filtros de Campeón o Rol especificados.');
+    throw new Error('No se encontraron partidas válidas de más de 8 minutos (se excluyen remakes) que coincidan con los filtros especificados.');
   }
 
   return {
