@@ -140,3 +140,162 @@ export interface AppSettings {
   groqApiKey: string;
   isDemoMode: boolean;
 }
+
+// ==========================================
+// BUILD ADVISOR TYPES & SPECTATOR V5 DOMAIN
+// ==========================================
+
+export interface RiotActiveGameParticipant {
+  puuid: string;
+  teamId: number; // 100 = Blue, 200 = Red
+  spell1Id: number;
+  spell2Id: number;
+  championId: number;
+  summonerId?: string;
+  riotId?: string;
+  bot: boolean;
+  perks?: {
+    perkIds: number[];
+    perkStyle: number;
+    perkSubStyle: number;
+  };
+}
+
+export interface RiotActiveGame {
+  gameId: number;
+  gameType: string;
+  gameStartTime: number;
+  mapId: number;
+  gameLength: number;
+  platformId: string;
+  gameMode: string;
+  bannedChampions: Array<{ championId: number; teamId: number; pickTurn: number }>;
+  gameQueueConfigId: number;
+  participants: RiotActiveGameParticipant[];
+}
+
+export interface ActiveGameChampion {
+  championId: number;
+  championName: string;
+  role?: RoleFilter;
+  puuid: string;
+  summonerName: string;
+  teamId: number;
+  isPlayer: boolean;
+}
+
+export interface ActiveGameData {
+  gameId: number;
+  gameMode: string;
+  gameStartTime: number;
+  playerChampion: ActiveGameChampion;
+  allies: ActiveGameChampion[];
+  enemies: ActiveGameChampion[];
+  patch: string;
+}
+
+export interface CompositionAnalysis {
+  damageBreakdown: {
+    adCount: number;
+    apCount: number;
+    adPercent: number;
+    apPercent: number;
+    predominance: 'PREDOMINANTLY_AD' | 'PREDOMINANTLY_AP' | 'MIXED_DAMAGE';
+    damageStyle: 'BURST' | 'DPS_SUSTAINED' | 'HYBRID';
+    hasTrueDamageThreat: boolean;
+  };
+  resistanceBreakdown: {
+    tankCount: number;
+    bruiserCount: number;
+    squishyCount: number;
+    highHpThreats: string[];
+    highResistanceThreats: string[];
+    penetrationNeed: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW';
+  };
+  crowdControlBreakdown: {
+    hardCcCount: number;
+    softCcCount: number;
+    threatLevel: 'HEAVY_CC' | 'MODERATE_CC' | 'LOW_CC';
+    engageStyle: 'HARD_ENGAGE' | 'PICK' | 'REACTIVE_DISENGAGE' | 'POKE';
+    tenacityPriority: boolean;
+    cleanseQssRecommended: boolean;
+  };
+  healingBreakdown: {
+    heavyHealers: string[];
+    needGrievousWounds: 'URGENT' | 'RECOMMENDED' | 'LOW';
+    antiHealReason?: string;
+  };
+  burstThreatBreakdown: {
+    physicalAssassins: string[];
+    magicAssassins: string[];
+    overallBurstThreat: 'HIGH_BURST' | 'MODERATE' | 'LOW';
+    defensiveItemNeed: boolean;
+  };
+  rangeBreakdown: {
+    isPokeComp: boolean;
+    averageRangeType: 'HIGH_RANGE_POKE' | 'BALANCED' | 'SHORT_RANGE_MELEE';
+  };
+  teamfightProfile: {
+    primaryStyle: 'FRONT_TO_BACK' | 'DIVE_ASSASSINATE' | 'POKE_SIEGE' | 'PICK_SKIRMISH' | 'SPLIT_PUSH';
+    scalingProfile: 'EARLY_SNOWBALL' | 'MID_GAME_POWERSPIKE' | 'LATE_GAME_HYPERSCALING';
+  };
+}
+
+export interface BuildRecommendationItem {
+  id: number;
+  name: string;
+  reason: string;
+  isCore?: boolean;
+  order?: number;
+}
+
+export interface BuildRecommendation {
+  patch: string;
+  playerChampion: string;
+  startingItem: {
+    primary: { id: number; name: string; reason: string };
+    alternative?: { id: number; name: string; reason: string };
+  };
+  boots: {
+    id: number;
+    name: string;
+    reason: string;
+  };
+  coreBuild: Array<{
+    order: number;
+    id: number;
+    name: string;
+    reason: string;
+    isCore: boolean;
+  }>;
+  situationalItems: Array<{
+    condition: string;
+    id: number;
+    name: string;
+    reason: string;
+    triggerMatched: boolean;
+  }>;
+  runes: {
+    primaryTree: string;
+    keystone: { id: number; name: string; description: string };
+    primaryMinors: Array<{ id: number; name: string }>;
+    secondaryTree: string;
+    secondaryMinors: Array<{ id: number; name: string }>;
+    shards: {
+      offense: string;
+      flex: string;
+      defense: string;
+    };
+  };
+  skillOrder?: {
+    levels: Array<{ level: number; skill: 'Q' | 'W' | 'E' | 'R' }>;
+    maxOrder: string;
+    first3Levels: string;
+  };
+  explanation: {
+    title: string;
+    reasons: string[];
+    tacticalSummary: string;
+  };
+}
+

@@ -1,13 +1,20 @@
 import React from 'react';
-import { Settings, ShieldCheck, Sparkles, AlertCircle } from 'lucide-react';
+import { Settings, ShieldCheck, Sparkles, AlertCircle, Shield } from 'lucide-react';
 import { AppSettings } from '../types';
 
 interface HeaderProps {
   settings: AppSettings;
   onOpenSettings: () => void;
+  activeTab?: 'build-advisor' | 'history';
+  onSelectTab?: (tab: 'build-advisor' | 'history') => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ settings, onOpenSettings }) => {
+export const Header: React.FC<HeaderProps> = ({ 
+  settings, 
+  onOpenSettings,
+  activeTab = 'build-advisor',
+  onSelectTab,
+}) => {
   const hasRiotKey = !!settings.riotApiKey;
   const hasGroqKey = !!settings.groqApiKey;
 
@@ -31,6 +38,39 @@ export const Header: React.FC<HeaderProps> = ({ settings, onOpenSettings }) => {
             </p>
           </div>
         </div>
+
+        {/* Navigation Tabs */}
+        {onSelectTab && (
+          <div className="flex items-center gap-1.5 bg-hextech-black/60 p-1 rounded-lg border border-hextech-gold/30">
+            <button
+              onClick={() => onSelectTab('build-advisor')}
+              className={`px-3 py-1.5 rounded text-xs font-semibold font-cinzel transition-all flex items-center gap-1.5 ${
+                activeTab === 'build-advisor'
+                  ? 'bg-hextech-gold text-black shadow-md font-bold'
+                  : 'text-gray-400 hover:text-hextech-gold'
+              }`}
+            >
+              <Shield className="w-3.5 h-3.5" />
+              <span>BUILD ADVISOR</span>
+              <span className={`text-[9px] px-1 rounded uppercase font-mono font-bold ${
+                activeTab === 'build-advisor' ? 'bg-black text-hextech-gold' : 'bg-emerald-950 text-emerald-300'
+              }`}>
+                V5
+              </span>
+            </button>
+            <button
+              onClick={() => onSelectTab('history')}
+              className={`px-3 py-1.5 rounded text-xs font-semibold font-cinzel transition-all flex items-center gap-1.5 ${
+                activeTab === 'history'
+                  ? 'bg-hextech-gold text-black shadow-md font-bold'
+                  : 'text-gray-400 hover:text-hextech-gold'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>COACH & HISTORIAL</span>
+            </button>
+          </div>
+        )}
 
         {/* Status Indicators & Settings Button */}
         <div className="flex items-center gap-3">

@@ -263,3 +263,273 @@ export const getItemIconUrl = (itemId: number): string => {
   if (!itemId || itemId === 0) return '';
   return `https://ddragon.leagueoflegends.com/cdn/15.3.1/img/item/${itemId}.png`;
 };
+
+// ==========================================
+// CHAMPION METADATA & COMBAT PROFILES
+// ==========================================
+
+export type CombatClass = 
+  | 'TANK' 
+  | 'BRUISER' 
+  | 'ASSASSIN_AD' 
+  | 'ASSASSIN_AP' 
+  | 'MAGE' 
+  | 'MARKSMAN' 
+  | 'SUPPORT_ENCHANTER' 
+  | 'SUPPORT_TANK';
+
+export interface ChampionMetadata {
+  id: string; // DataDragon key (e.g. "Ahri", "Aatrox")
+  numericId: number; // Riot Spectator numeric ID (e.g. 103, 266)
+  name: string; // Display name
+  role: 'TOP' | 'JUNGLE' | 'MID' | 'BOT' | 'SUPPORT';
+  damageType: 'AD' | 'AP' | 'MIXED' | 'TRUE';
+  combatClass: CombatClass;
+  hasHardCc: boolean;
+  hasHeavyHealing: boolean;
+  isHighBurst: boolean;
+  isHighRange: boolean;
+  skillOrder: string;
+  keystoneId: number;
+  primaryTree: string;
+  secondaryTree: string;
+}
+
+export const CHAMPION_METADATA_LIST: ChampionMetadata[] = [
+  { id: 'Aatrox', numericId: 266, name: 'Aatrox', role: 'TOP', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Dominación' },
+  { id: 'Ahri', numericId: 103, name: 'Ahri', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8112, primaryTree: 'Dominación', secondaryTree: 'Brujería' },
+  { id: 'Akali', numericId: 84, name: 'Akali', role: 'MID', damageType: 'AP', combatClass: 'ASSASSIN_AP', hasHardCc: false, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Valor' },
+  { id: 'Akshan', numericId: 166, name: 'Akshan', role: 'MID', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: false, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > E > W', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Dominación' },
+  { id: 'Alistar', numericId: 12, name: 'Alistar', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_TANK', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8439, primaryTree: 'Valor', secondaryTree: 'Inspiración' },
+  { id: 'Amumu', numericId: 32, name: 'Amumu', role: 'JUNGLE', damageType: 'AP', combatClass: 'TANK', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'E > Q > W', keystoneId: 8439, primaryTree: 'Valor', secondaryTree: 'Precisión' },
+  { id: 'Anivia', numericId: 34, name: 'Anivia', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'E > Q > W', keystoneId: 8112, primaryTree: 'Dominación', secondaryTree: 'Brujería' },
+  { id: 'Annie', numericId: 1, name: 'Annie', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8112, primaryTree: 'Dominación', secondaryTree: 'Brujería' },
+  { id: 'Aphelios', numericId: 523, name: 'Aphelios', role: 'BOT', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Brujería' },
+  { id: 'Ashe', numericId: 22, name: 'Ashe', role: 'BOT', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: true, skillOrder: 'W > Q > E', keystoneId: 8008, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'AurelionSol', numericId: 136, name: 'Aurelion Sol', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: true, skillOrder: 'Q > E > W', keystoneId: 8229, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Aurora', numericId: 893, name: 'Aurora', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8112, primaryTree: 'Dominación', secondaryTree: 'Brujería' },
+  { id: 'Azir', numericId: 268, name: 'Azir', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: true, skillOrder: 'W > Q > E', keystoneId: 8008, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Bard', numericId: 432, name: 'Bardo', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_ENCHANTER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8021, primaryTree: 'Precisión', secondaryTree: 'Valor' },
+  { id: 'Belveth', numericId: 200, name: 'Bel\'Veth', role: 'JUNGLE', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Blitzcrank', numericId: 53, name: 'Blitzcrank', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_TANK', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8351, primaryTree: 'Inspiración', secondaryTree: 'Valor' },
+  { id: 'Brand', numericId: 63, name: 'Brand', role: 'SUPPORT', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'W > E > Q', keystoneId: 8229, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Braum', numericId: 201, name: 'Braum', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_TANK', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8465, primaryTree: 'Valor', secondaryTree: 'Inspiración' },
+  { id: 'Briar', numericId: 233, name: 'Briar', role: 'JUNGLE', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'W > Q > E', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Dominación' },
+  { id: 'Caitlyn', numericId: 51, name: 'Caitlyn', role: 'BOT', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8021, primaryTree: 'Precisión', secondaryTree: 'Brujería' },
+  { id: 'Camille', numericId: 164, name: 'Camille', role: 'TOP', damageType: 'TRUE', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8437, primaryTree: 'Valor', secondaryTree: 'Inspiración' },
+  { id: 'Cassiopeia', numericId: 69, name: 'Cassiopeia', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'E > Q > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Brujería' },
+  { id: 'Chogath', numericId: 31, name: 'Cho\'Gath', role: 'TOP', damageType: 'AP', combatClass: 'TANK', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'E > W > Q', keystoneId: 8437, primaryTree: 'Valor', secondaryTree: 'Inspiración' },
+  { id: 'Corki', numericId: 42, name: 'Corki', role: 'MID', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: false, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > E > W', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Brujería' },
+  { id: 'Darius', numericId: 122, name: 'Darius', role: 'TOP', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Brujería' },
+  { id: 'Diana', numericId: 131, name: 'Diana', role: 'JUNGLE', damageType: 'AP', combatClass: 'ASSASSIN_AP', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Brujería' },
+  { id: 'Draven', numericId: 119, name: 'Draven', role: 'BOT', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Dominación' },
+  { id: 'DrMundo', numericId: 36, name: 'Dr. Mundo', role: 'TOP', damageType: 'AD', combatClass: 'TANK', hasHardCc: false, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8437, primaryTree: 'Valor', secondaryTree: 'Inspiración' },
+  { id: 'Ekko', numericId: 245, name: 'Ekko', role: 'MID', damageType: 'AP', combatClass: 'ASSASSIN_AP', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8112, primaryTree: 'Dominación', secondaryTree: 'Inspiración' },
+  { id: 'Elise', numericId: 60, name: 'Elise', role: 'JUNGLE', damageType: 'AP', combatClass: 'ASSASSIN_AP', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8112, primaryTree: 'Dominación', secondaryTree: 'Brujería' },
+  { id: 'Evelynn', numericId: 28, name: 'Evelynn', role: 'JUNGLE', damageType: 'AP', combatClass: 'ASSASSIN_AP', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8112, primaryTree: 'Dominación', secondaryTree: 'Brujería' },
+  { id: 'Ezreal', numericId: 81, name: 'Ezreal', role: 'BOT', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: false, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > E > W', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Brujería' },
+  { id: 'Fiddlesticks', numericId: 9, name: 'Fiddlesticks', role: 'JUNGLE', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'W > Q > E', keystoneId: 8351, primaryTree: 'Inspiración', secondaryTree: 'Dominación' },
+  { id: 'Fiora', numericId: 114, name: 'Fiora', role: 'TOP', damageType: 'TRUE', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8437, primaryTree: 'Valor', secondaryTree: 'Brujería' },
+  { id: 'Fizz', numericId: 105, name: 'Fizz', role: 'MID', damageType: 'AP', combatClass: 'ASSASSIN_AP', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'E > W > Q', keystoneId: 8112, primaryTree: 'Dominación', secondaryTree: 'Brujería' },
+  { id: 'Galio', numericId: 3, name: 'Galio', role: 'MID', damageType: 'AP', combatClass: 'TANK', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8439, primaryTree: 'Valor', secondaryTree: 'Brujería' },
+  { id: 'Gangplank', numericId: 41, name: 'Gangplank', role: 'TOP', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: false, hasHeavyHealing: true, isHighBurst: true, isHighRange: true, skillOrder: 'Q > E > W', keystoneId: 8437, primaryTree: 'Valor', secondaryTree: 'Inspiración' },
+  { id: 'Garen', numericId: 86, name: 'Garen', role: 'TOP', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: false, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'E > Q > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Brujería' },
+  { id: 'Gnar', numericId: 150, name: 'Gnar', role: 'TOP', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8021, primaryTree: 'Precisión', secondaryTree: 'Valor' },
+  { id: 'Gragas', numericId: 79, name: 'Gragas', role: 'TOP', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8230, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Graves', numericId: 104, name: 'Graves', role: 'JUNGLE', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: false, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8021, primaryTree: 'Precisión', secondaryTree: 'Brujería' },
+  { id: 'Gwen', numericId: 887, name: 'Gwen', role: 'TOP', damageType: 'AP', combatClass: 'BRUISER', hasHardCc: false, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Valor' },
+  { id: 'Hecarim', numericId: 120, name: 'Hecarim', role: 'JUNGLE', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8230, primaryTree: 'Brujería', secondaryTree: 'Precisión' },
+  { id: 'Heimerdinger', numericId: 71, name: 'Heimerdinger', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8229, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Hwei', numericId: 910, name: 'Hwei', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > E > W', keystoneId: 8229, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Illaoi', numericId: 420, name: 'Illaoi', role: 'TOP', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: false, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'E > Q > W', keystoneId: 8437, primaryTree: 'Valor', secondaryTree: 'Inspiración' },
+  { id: 'Irelia', numericId: 39, name: 'Irelia', role: 'TOP', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Ivern', numericId: 427, name: 'Ivern', role: 'JUNGLE', damageType: 'AP', combatClass: 'SUPPORT_ENCHANTER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'E > Q > W', keystoneId: 8214, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Janna', numericId: 40, name: 'Janna', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_ENCHANTER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'W > E > Q', keystoneId: 8214, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'JarvanIV', numericId: 59, name: 'Jarvan IV', role: 'JUNGLE', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Jax', numericId: 24, name: 'Jax', role: 'TOP', damageType: 'MIXED', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'W > E > Q', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Valor' },
+  { id: 'Jayce', numericId: 126, name: 'Jayce', role: 'TOP', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8230, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Jhin', numericId: 202, name: 'Jhin', role: 'BOT', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8021, primaryTree: 'Precisión', secondaryTree: 'Brujería' },
+  { id: 'Jinx', numericId: 222, name: 'Jinx', role: 'BOT', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8008, primaryTree: 'Precisión', secondaryTree: 'Brujería' },
+  { id: 'Kaisa', numericId: 145, name: 'Kai\'Sa', role: 'BOT', damageType: 'MIXED', combatClass: 'MARKSMAN', hasHardCc: false, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Kalista', numericId: 429, name: 'Kalista', role: 'BOT', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'E > Q > W', keystoneId: 8008, primaryTree: 'Precisión', secondaryTree: 'Dominación' },
+  { id: 'Karma', numericId: 43, name: 'Karma', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_ENCHANTER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: true, skillOrder: 'Q > E > W', keystoneId: 8229, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Karthus', numericId: 30, name: 'Karthus', role: 'JUNGLE', damageType: 'AP', combatClass: 'MAGE', hasHardCc: false, hasHeavyHealing: false, isHighBurst: false, isHighRange: true, skillOrder: 'Q > E > W', keystoneId: 8128, primaryTree: 'Dominación', secondaryTree: 'Precisión' },
+  { id: 'Kassadin', numericId: 38, name: 'Kassadin', role: 'MID', damageType: 'AP', combatClass: 'ASSASSIN_AP', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'E > W > Q', keystoneId: 8021, primaryTree: 'Precisión', secondaryTree: 'Dominación' },
+  { id: 'Katarina', numericId: 55, name: 'Katarina', role: 'MID', damageType: 'AP', combatClass: 'ASSASSIN_AP', hasHardCc: false, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Dominación' },
+  { id: 'Kayle', numericId: 10, name: 'Kayle', role: 'TOP', damageType: 'MIXED', combatClass: 'MARKSMAN', hasHardCc: false, hasHeavyHealing: true, isHighBurst: true, isHighRange: true, skillOrder: 'Q > E > W', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Brujería' },
+  { id: 'Kayn', numericId: 141, name: 'Kayn', role: 'JUNGLE', damageType: 'AD', combatClass: 'ASSASSIN_AD', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Kennen', numericId: 85, name: 'Kennen', role: 'TOP', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8214, primaryTree: 'Brujería', secondaryTree: 'Dominación' },
+  { id: 'Khazix', numericId: 121, name: 'Kha\'Zix', role: 'JUNGLE', damageType: 'AD', combatClass: 'ASSASSIN_AD', hasHardCc: false, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8128, primaryTree: 'Dominación', secondaryTree: 'Precisión' },
+  { id: 'Kindred', numericId: 203, name: 'Kindred', role: 'JUNGLE', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: false, hasHeavyHealing: true, isHighBurst: true, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Dominación' },
+  { id: 'Kled', numericId: 240, name: 'Kled', role: 'TOP', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Valor' },
+  { id: 'KogMaw', numericId: 96, name: 'Kog\'Maw', role: 'BOT', damageType: 'MIXED', combatClass: 'MARKSMAN', hasHardCc: false, hasHeavyHealing: false, isHighBurst: false, isHighRange: true, skillOrder: 'W > Q > E', keystoneId: 8008, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Ksante', numericId: 897, name: 'K\'Sante', role: 'TOP', damageType: 'AD', combatClass: 'TANK', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8437, primaryTree: 'Valor', secondaryTree: 'Inspiración' },
+  { id: 'Leblanc', numericId: 7, name: 'LeBlanc', role: 'MID', damageType: 'AP', combatClass: 'ASSASSIN_AP', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'W > Q > E', keystoneId: 8112, primaryTree: 'Dominación', secondaryTree: 'Brujería' },
+  { id: 'LeeSin', numericId: 64, name: 'Lee Sin', role: 'JUNGLE', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Leona', numericId: 89, name: 'Leona', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_TANK', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'W > E > Q', keystoneId: 8439, primaryTree: 'Valor', secondaryTree: 'Inspiración' },
+  { id: 'Lillia', numericId: 876, name: 'Lillia', role: 'JUNGLE', damageType: 'AP', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Lissandra', numericId: 127, name: 'Lissandra', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8112, primaryTree: 'Dominación', secondaryTree: 'Brujería' },
+  { id: 'Lucian', numericId: 236, name: 'Lucian', role: 'BOT', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: false, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Lulu', numericId: 117, name: 'Lulu', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_ENCHANTER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'E > W > Q', keystoneId: 8214, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Lux', numericId: 99, name: 'Lux', role: 'SUPPORT', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'E > Q > W', keystoneId: 8229, primaryTree: 'Brujería', secondaryTree: 'Dominación' },
+  { id: 'Malphite', numericId: 54, name: 'Malphite', role: 'TOP', damageType: 'AP', combatClass: 'TANK', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8229, primaryTree: 'Brujería', secondaryTree: 'Valor' },
+  { id: 'Malzahar', numericId: 90, name: 'Malzahar', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'E > Q > W', keystoneId: 8214, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Maokai', numericId: 57, name: 'Maokai', role: 'SUPPORT', damageType: 'AP', combatClass: 'TANK', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8439, primaryTree: 'Valor', secondaryTree: 'Inspiración' },
+  { id: 'MasterYi', numericId: 11, name: 'Master Yi', role: 'JUNGLE', damageType: 'TRUE', combatClass: 'ASSASSIN_AD', hasHardCc: false, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8008, primaryTree: 'Precisión', secondaryTree: 'Dominación' },
+  { id: 'Milio', numericId: 902, name: 'Milio', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_ENCHANTER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'E > W > Q', keystoneId: 8214, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'MissFortune', numericId: 21, name: 'Miss Fortune', role: 'BOT', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: false, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Brujería' },
+  { id: 'MonkeyKing', numericId: 62, name: 'Wukong', role: 'JUNGLE', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Mordekaiser', numericId: 82, name: 'Mordekaiser', role: 'TOP', damageType: 'AP', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Valor' },
+  { id: 'Morgana', numericId: 25, name: 'Morgana', role: 'SUPPORT', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: true, skillOrder: 'Q > E > W', keystoneId: 8229, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Naafiri', numericId: 950, name: 'Naafiri', role: 'MID', damageType: 'AD', combatClass: 'ASSASSIN_AD', hasHardCc: false, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8112, primaryTree: 'Dominación', secondaryTree: 'Brujería' },
+  { id: 'Nami', numericId: 267, name: 'Nami', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_ENCHANTER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'W > E > Q', keystoneId: 8214, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Nasus', numericId: 75, name: 'Nasus', role: 'TOP', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: false, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8021, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Nautilus', numericId: 111, name: 'Nautilus', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_TANK', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8439, primaryTree: 'Valor', secondaryTree: 'Inspiración' },
+  { id: 'Neeko', numericId: 518, name: 'Neeko', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8229, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Nidalee', numericId: 76, name: 'Nidalee', role: 'JUNGLE', damageType: 'AP', combatClass: 'ASSASSIN_AP', hasHardCc: false, hasHeavyHealing: true, isHighBurst: true, isHighRange: true, skillOrder: 'Q > E > W', keystoneId: 8128, primaryTree: 'Dominación', secondaryTree: 'Brujería' },
+  { id: 'Nilah', numericId: 895, name: 'Nilah', role: 'BOT', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Dominación' },
+  { id: 'Nocturne', numericId: 56, name: 'Nocturne', role: 'JUNGLE', damageType: 'AD', combatClass: 'ASSASSIN_AD', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8008, primaryTree: 'Precisión', secondaryTree: 'Dominación' },
+  { id: 'Nunu', numericId: 20, name: 'Nunu & Willump', role: 'JUNGLE', damageType: 'AP', combatClass: 'TANK', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8230, primaryTree: 'Brujería', secondaryTree: 'Precisión' },
+  { id: 'Olaf', numericId: 2, name: 'Olaf', role: 'TOP', damageType: 'TRUE', combatClass: 'BRUISER', hasHardCc: false, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Orianna', numericId: 61, name: 'Orianna', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8230, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Ornn', numericId: 516, name: 'Ornn', role: 'TOP', damageType: 'MIXED', combatClass: 'TANK', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8437, primaryTree: 'Valor', secondaryTree: 'Inspiración' },
+  { id: 'Pantheon', numericId: 80, name: 'Pantheon', role: 'MID', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Poppy', numericId: 78, name: 'Poppy', role: 'JUNGLE', damageType: 'AD', combatClass: 'TANK', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8230, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Pyke', numericId: 555, name: 'Pyke', role: 'SUPPORT', damageType: 'AD', combatClass: 'ASSASSIN_AD', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 9923, primaryTree: 'Dominación', secondaryTree: 'Inspiración' },
+  { id: 'Qiyana', numericId: 246, name: 'Qiyana', role: 'MID', damageType: 'AD', combatClass: 'ASSASSIN_AD', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8112, primaryTree: 'Dominación', secondaryTree: 'Precisión' },
+  { id: 'Quinn', numericId: 133, name: 'Quinn', role: 'TOP', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'W > Q > E', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Brujería' },
+  { id: 'Rakan', numericId: 497, name: 'Rakan', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_TANK', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'W > E > Q', keystoneId: 8351, primaryTree: 'Inspiración', secondaryTree: 'Valor' },
+  { id: 'Rammus', numericId: 33, name: 'Rammus', role: 'JUNGLE', damageType: 'MIXED', combatClass: 'TANK', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8439, primaryTree: 'Valor', secondaryTree: 'Precisión' },
+  { id: 'RekSai', numericId: 421, name: 'Rek\'Sai', role: 'JUNGLE', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Rell', numericId: 526, name: 'Rell', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_TANK', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'W > Q > E', keystoneId: 8351, primaryTree: 'Inspiración', secondaryTree: 'Valor' },
+  { id: 'Renata', numericId: 888, name: 'Renata Glasc', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_ENCHANTER', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'E > W > Q', keystoneId: 8465, primaryTree: 'Valor', secondaryTree: 'Inspiración' },
+  { id: 'Renekton', numericId: 58, name: 'Renekton', role: 'TOP', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Valor' },
+  { id: 'Rengar', numericId: 107, name: 'Rengar', role: 'JUNGLE', damageType: 'AD', combatClass: 'ASSASSIN_AD', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Dominación' },
+  { id: 'Riven', numericId: 92, name: 'Riven', role: 'TOP', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Brujería' },
+  { id: 'Rumble', numericId: 68, name: 'Rumble', role: 'TOP', damageType: 'AP', combatClass: 'BRUISER', hasHardCc: false, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8229, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Ryze', numericId: 13, name: 'Ryze', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8230, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Samira', numericId: 360, name: 'Samira', role: 'BOT', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: false, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Dominación' },
+  { id: 'Sejuani', numericId: 113, name: 'Sejuani', role: 'JUNGLE', damageType: 'AP', combatClass: 'TANK', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'W > Q > E', keystoneId: 8439, primaryTree: 'Valor', secondaryTree: 'Precisión' },
+  { id: 'Senna', numericId: 235, name: 'Senna', role: 'SUPPORT', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8021, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Seraphine', numericId: 147, name: 'Seraphine', role: 'BOT', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: true, skillOrder: 'Q > E > W', keystoneId: 8214, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Sett', numericId: 875, name: 'Sett', role: 'TOP', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Valor' },
+  { id: 'Shaco', numericId: 35, name: 'Shaco', role: 'JUNGLE', damageType: 'AD', combatClass: 'ASSASSIN_AD', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'E > Q > W', keystoneId: 9923, primaryTree: 'Dominación', secondaryTree: 'Precisión' },
+  { id: 'Shen', numericId: 98, name: 'Shen', role: 'TOP', damageType: 'MIXED', combatClass: 'TANK', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8437, primaryTree: 'Valor', secondaryTree: 'Inspiración' },
+  { id: 'Shyvana', numericId: 102, name: 'Shyvana', role: 'JUNGLE', damageType: 'AP', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'E > W > Q', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Brujería' },
+  { id: 'Singed', numericId: 27, name: 'Singed', role: 'TOP', damageType: 'AP', combatClass: 'TANK', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Brujería' },
+  { id: 'Sion', numericId: 14, name: 'Sion', role: 'TOP', damageType: 'AD', combatClass: 'TANK', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8437, primaryTree: 'Valor', secondaryTree: 'Inspiración' },
+  { id: 'Sivir', numericId: 15, name: 'Sivir', role: 'BOT', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: false, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8008, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Skarner', numericId: 72, name: 'Skarner', role: 'JUNGLE', damageType: 'AD', combatClass: 'TANK', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8439, primaryTree: 'Valor', secondaryTree: 'Inspiración' },
+  { id: 'Smolder', numericId: 901, name: 'Smolder', role: 'BOT', damageType: 'TRUE', combatClass: 'MARKSMAN', hasHardCc: false, hasHeavyHealing: false, isHighBurst: false, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8021, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Sona', numericId: 37, name: 'Sona', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_ENCHANTER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8214, primaryTree: 'Brujería', secondaryTree: 'Precisión' },
+  { id: 'Soraka', numericId: 16, name: 'Soraka', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_ENCHANTER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'W > Q > E', keystoneId: 8214, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Swain', numericId: 50, name: 'Swain', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Sylas', numericId: 517, name: 'Sylas', role: 'MID', damageType: 'AP', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'W > E > Q', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Syndra', numericId: 134, name: 'Syndra', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8112, primaryTree: 'Dominación', secondaryTree: 'Brujería' },
+  { id: 'TahmKench', numericId: 223, name: 'Tahm Kench', role: 'TOP', damageType: 'AP', combatClass: 'TANK', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8437, primaryTree: 'Valor', secondaryTree: 'Inspiración' },
+  { id: 'Taliyah', numericId: 163, name: 'Taliyah', role: 'JUNGLE', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > E > W', keystoneId: 8230, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Talon', numericId: 91, name: 'Talon', role: 'MID', damageType: 'AD', combatClass: 'ASSASSIN_AD', hasHardCc: false, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'W > Q > E', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Dominación' },
+  { id: 'Taric', numericId: 44, name: 'Taric', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_TANK', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'E > Q > W', keystoneId: 8351, primaryTree: 'Inspiración', secondaryTree: 'Valor' },
+  { id: 'Teemo', numericId: 17, name: 'Teemo', role: 'TOP', damageType: 'AP', combatClass: 'MARKSMAN', hasHardCc: false, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'E > Q > W', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Brujería' },
+  { id: 'Thresh', numericId: 412, name: 'Thresh', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_TANK', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8351, primaryTree: 'Inspiración', secondaryTree: 'Valor' },
+  { id: 'Tristana', numericId: 18, name: 'Tristana', role: 'BOT', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'E > Q > W', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Trundle', numericId: 48, name: 'Trundle', role: 'TOP', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: false, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8008, primaryTree: 'Precisión', secondaryTree: 'Brujería' },
+  { id: 'Tryndamere', numericId: 23, name: 'Tryndamere', role: 'TOP', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: false, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8008, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'TwistedFate', numericId: 4, name: 'Twisted Fate', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8229, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Twitch', numericId: 29, name: 'Twitch', role: 'BOT', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: false, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'E > Q > W', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Dominación' },
+  { id: 'Udyr', numericId: 77, name: 'Udyr', role: 'JUNGLE', damageType: 'AP', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'R > W > E', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Urgot', numericId: 6, name: 'Urgot', role: 'TOP', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'W > Q > E', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Varus', numericId: 110, name: 'Varus', role: 'BOT', damageType: 'MIXED', combatClass: 'MARKSMAN', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Vayne', numericId: 67, name: 'Vayne', role: 'BOT', damageType: 'TRUE', combatClass: 'MARKSMAN', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'W > Q > E', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Veigar', numericId: 45, name: 'Veigar', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8229, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Velkoz', numericId: 161, name: 'Vel\'Koz', role: 'MID', damageType: 'TRUE', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8229, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Vex', numericId: 711, name: 'Vex', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8112, primaryTree: 'Dominación', secondaryTree: 'Brujería' },
+  { id: 'Vi', numericId: 254, name: 'Vi', role: 'JUNGLE', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Viego', numericId: 234, name: 'Viego', role: 'JUNGLE', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Viktor', numericId: 112, name: 'Viktor', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'E > Q > W', keystoneId: 8214, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Vladimir', numericId: 8, name: 'Vladimir', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: false, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8230, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Volibear', numericId: 106, name: 'Volibear', role: 'TOP', damageType: 'MIXED', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'W > Q > E', keystoneId: 8437, primaryTree: 'Valor', secondaryTree: 'Precisión' },
+  { id: 'Warwick', numericId: 19, name: 'Warwick', role: 'JUNGLE', damageType: 'MIXED', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Xayah', numericId: 498, name: 'Xayah', role: 'BOT', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'E > W > Q', keystoneId: 8008, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Xerath', numericId: 101, name: 'Xerath', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8229, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'XinZhao', numericId: 5, name: 'Xin Zhao', role: 'JUNGLE', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'W > E > Q', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Yasuo', numericId: 157, name: 'Yasuo', role: 'MID', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8008, primaryTree: 'Precisión', secondaryTree: 'Valor' },
+  { id: 'Yone', numericId: 777, name: 'Yone', role: 'MID', damageType: 'MIXED', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8008, primaryTree: 'Precisión', secondaryTree: 'Valor' },
+  { id: 'Yorick', numericId: 83, name: 'Yorick', role: 'TOP', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: false, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Yuumi', numericId: 350, name: 'Yuumi', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_ENCHANTER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8214, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Zac', numericId: 154, name: 'Zac', role: 'JUNGLE', damageType: 'AP', combatClass: 'TANK', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'E > W > Q', keystoneId: 8439, primaryTree: 'Valor', secondaryTree: 'Inspiración' },
+  { id: 'Zed', numericId: 238, name: 'Zed', role: 'MID', damageType: 'AD', combatClass: 'ASSASSIN_AD', hasHardCc: false, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8112, primaryTree: 'Dominación', secondaryTree: 'Precisión' },
+  { id: 'Zeri', numericId: 221, name: 'Zeri', role: 'BOT', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: false, hasHeavyHealing: false, isHighBurst: false, isHighRange: true, skillOrder: 'Q > E > W', keystoneId: 8008, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Ziggs', numericId: 115, name: 'Ziggs', role: 'BOT', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > E > W', keystoneId: 8229, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Zilean', numericId: 26, name: 'Zilean', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_ENCHANTER', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: true, skillOrder: 'Q > E > W', keystoneId: 8214, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Zoe', numericId: 142, name: 'Zoe', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > E > W', keystoneId: 8112, primaryTree: 'Dominación', secondaryTree: 'Brujería' },
+  { id: 'Zyra', numericId: 143, name: 'Zyra', role: 'SUPPORT', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > E > W', keystoneId: 8229, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+];
+
+export const CHAMPION_METADATA_MAP: Record<number, ChampionMetadata> = {};
+CHAMPION_METADATA_LIST.forEach((c) => {
+  CHAMPION_METADATA_MAP[c.numericId] = c;
+});
+
+/**
+ * Obtiene los metadatos de combate de un campeón por su ID numérico de Riot
+ */
+export const getChampionByNumericId = (numericId: number): ChampionMetadata | undefined => {
+  return CHAMPION_METADATA_MAP[numericId];
+};
+
+/**
+ * Obtiene los metadatos de combate de un campeón por su nombre o ID de cadena
+ */
+export const getChampionByName = (nameOrId: string): ChampionMetadata | undefined => {
+  if (!nameOrId) return undefined;
+  const clean = nameOrId.trim().toLowerCase();
+  return CHAMPION_METADATA_LIST.find(
+    (c) =>
+      c.name.toLowerCase() === clean ||
+      c.id.toLowerCase() === clean ||
+      c.name.toLowerCase().replace(/[^a-z0-9]/g, '') === clean.replace(/[^a-z0-9]/g, '')
+  );
+};
+
+/**
+ * Resuelve metadatos seguros de un campeón por ID numérico o nombre, con fallback robusto
+ */
+export const resolveChampionInfo = (idOrName: number | string): ChampionMetadata => {
+  if (typeof idOrName === 'number') {
+    const found = getChampionByNumericId(idOrName);
+    if (found) return found;
+  }
+  const foundByName = getChampionByName(String(idOrName));
+  if (foundByName) return foundByName;
+
+  // Fallback seguro si es un campeón nuevo no registrado
+  const nameStr = String(idOrName);
+  return {
+    id: nameStr.replace(/[^a-zA-Z0-9]/g, '') || 'Unknown',
+    numericId: typeof idOrName === 'number' ? idOrName : 9999,
+    name: nameStr || 'Campeón Desconocido',
+    role: 'MID',
+    damageType: 'AD',
+    combatClass: 'BRUISER',
+    hasHardCc: false,
+    hasHeavyHealing: false,
+    isHighBurst: false,
+    isHighRange: false,
+    skillOrder: 'Q > W > E',
+    keystoneId: 8010,
+    primaryTree: 'Precisión',
+    secondaryTree: 'Inspiración',
+  };
+};
+
+/**
+ * Valida si un campeón existe oficialmente
+ */
+export const isValidChampion = (idOrName: number | string): boolean => {
+  if (typeof idOrName === 'number') {
+    return !!CHAMPION_METADATA_MAP[idOrName];
+  }
+  return !!getChampionByName(idOrName);
+};
+

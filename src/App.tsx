@@ -6,6 +6,7 @@ import { BenchmarkCard } from './components/BenchmarkCard';
 import { MatchHistory } from './components/MatchHistory';
 import { AnalysisReport } from './components/AnalysisReport';
 import { LoadingOverlay } from './components/LoadingOverlay';
+import { BuildAdvisor } from './components/BuildAdvisor';
 
 import { 
   SearchFormData, 
@@ -17,11 +18,12 @@ import { getStoredSettings, saveStoredSettings } from './services/storage';
 import { fetchFullSummonerAnalysis } from './services/riotApi';
 import { generateGroqCoachAnalysis } from './services/groqCoach';
 import { getMockMatches, getMockAIReport } from './services/mockData';
-import { AlertCircle, Sparkles, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, Sparkles, RefreshCw, CheckCircle2, Shield, BarChart3 } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [settings, setSettings] = useState<AppSettings>(getStoredSettings());
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'build-advisor' | 'history'>('build-advisor');
 
   const [formData, setFormData] = useState<SearchFormData>({
     gameName: '',
@@ -143,57 +145,105 @@ export const App: React.FC = () => {
       <Header
         settings={settings}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        activeTab={activeTab}
+        onSelectTab={setActiveTab}
       />
 
       {/* Main Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
         
-        {/* Filter Panel */}
-        <FilterPanel
-          formData={formData}
-          onChange={(updated) => setFormData((prev) => ({ ...prev, ...updated }))}
-          onSubmit={handleSearchSubmit}
-          isLoading={isLoading}
-        />
+        {/* Navigation Tabs (Top Mobile & Desktop) */}
+        <div className="flex items-center gap-2 border-b border-hextech-gold/20 pb-3 flex-wrap">
+          <button
+            onClick={() => setActiveTab('build-advisor')}
+            className={`px-4 py-2 rounded text-xs font-bold font-cinzel transition-all flex items-center gap-2 ${
+              activeTab === 'build-advisor'
+                ? 'bg-hextech-gold text-black shadow-lg shadow-hextech-gold/20'
+                : 'bg-hextech-navy/60 border border-hextech-gold/20 text-gray-300 hover:text-hextech-gold hover:border-hextech-gold/40'
+            }`}
+          >
+            <Shield className="w-4 h-4" />
+            <span>BUILD ADVISOR (PARTIDA ACTIVA)</span>
+            <span className={`text-[9px] px-1.5 py-0.2 rounded font-mono uppercase font-black ${
+              activeTab === 'build-advisor' ? 'bg-black text-hextech-gold' : 'bg-emerald-950 text-emerald-300 border border-emerald-500/30'
+            }`}>
+              NUEVO
+            </span>
+          </button>
 
-        {/* Error Alert */}
-        {errorMessage && (
-          <div className="p-4 rounded-lg bg-rose-950/80 border border-rose-500/50 text-rose-200 flex items-start gap-3 shadow-lg animate-fade-in">
-            <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-            <div className="flex-1 text-xs md:text-sm">
-              <strong className="font-cinzel text-rose-300 block mb-0.5">Error de Procesamiento:</strong>
-              {errorMessage}
-            </div>
-            <button
-              onClick={() => setIsSettingsOpen(true)}
-              className="text-xs underline text-hextech-gold hover:text-white font-cinzel shrink-0"
-            >
-              Abrir Configuración
-            </button>
-          </div>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`px-4 py-2 rounded text-xs font-bold font-cinzel transition-all flex items-center gap-2 ${
+              activeTab === 'history'
+                ? 'bg-hextech-gold text-black shadow-lg shadow-hextech-gold/20'
+                : 'bg-hextech-navy/60 border border-hextech-gold/20 text-gray-300 hover:text-hextech-gold hover:border-hextech-gold/40'
+            }`}
+          >
+            <BarChart3 className="w-4 h-4" />
+            <span>COACH IA & HISTORIAL DE PARTIDAS</span>
+          </button>
+        </div>
+
+        {/* Tab 1: Build Advisor */}
+        {activeTab === 'build-advisor' && (
+          <BuildAdvisor
+            settings={settings}
+            defaultGameName={formData.gameName}
+            defaultTagLine={formData.tagLine}
+            defaultPlatform={formData.platform}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+          />
         )}
 
-        {/* Results Container */}
-        {matches && matches.length > 0 && (
+        {/* Tab 2: Match History & Coaching Audit */}
+        {activeTab === 'history' && (
           <div className="space-y-6 animate-fade-in">
-            
-            {/* Benchmark Comparison Card */}
-            <BenchmarkCard
-              matches={matches}
-              targetRank={formData.targetRank}
+            {/* Filter Panel */}
+            <FilterPanel
+              formData={formData}
+              onChange={(updated) => setFormData((prev) => ({ ...prev, ...updated }))}
+              onSubmit={handleSearchSubmit}
+              isLoading={isLoading}
             />
 
-            {/* AI Analysis Report (Visual Cards 1, 2, 3) */}
-            {aiReport && (
-              <AnalysisReport
-                report={aiReport}
-                targetRank={formData.targetRank}
-              />
+            {/* Error Alert */}
+            {errorMessage && (
+              <div className="p-4 rounded-lg bg-rose-950/80 border border-rose-500/50 text-rose-200 flex items-start gap-3 shadow-lg animate-fade-in">
+                <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+                <div className="flex-1 text-xs md:text-sm">
+                  <strong className="font-cinzel text-rose-300 block mb-0.5">Error de Procesamiento:</strong>
+                  {errorMessage}
+                </div>
+                <button
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="text-xs underline text-hextech-gold hover:text-white font-cinzel shrink-0"
+                >
+                  Abrir Configuración
+                </button>
+              </div>
             )}
 
-            {/* Match History Breakdown */}
-            <MatchHistory matches={matches} requestedCount={formData.matchCount} />
+            {/* Results Container */}
+            {matches && matches.length > 0 && (
+              <div className="space-y-6 animate-fade-in">
+                {/* Benchmark Comparison Card */}
+                <BenchmarkCard
+                  matches={matches}
+                  targetRank={formData.targetRank}
+                />
 
+                {/* AI Analysis Report (Visual Cards 1, 2, 3) */}
+                {aiReport && (
+                  <AnalysisReport
+                    report={aiReport}
+                    targetRank={formData.targetRank}
+                  />
+                )}
+
+                {/* Match History Breakdown */}
+                <MatchHistory matches={matches} requestedCount={formData.matchCount} />
+              </div>
+            )}
           </div>
         )}
 

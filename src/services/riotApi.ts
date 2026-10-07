@@ -5,7 +5,8 @@ import {
   MatchDetail, 
   MatchParticipant,
   RoleFilter,
-  TargetRank
+  TargetRank,
+  RiotActiveGame
 } from '../types';
 import { generateMatchTacticalAdvice } from './tacticalAdvice';
 
@@ -336,3 +337,95 @@ export const fetchFullSummonerAnalysis = async (
     matches: validMatches.slice(0, count),
   };
 };
+
+/**
+ * Maps standard platform enum to Riot Spectator-v5 platform routing
+ */
+export const getPlatformRouting = (platform: PlatformRegion): string => {
+  switch (platform) {
+    case 'LAS':
+    case 'LA2':
+      return 'la2';
+    case 'LAN':
+    case 'LA1':
+      return 'la1';
+    case 'NA1':
+      return 'na1';
+    case 'EUW1':
+      return 'euw1';
+    case 'EUN1':
+      return 'eun1';
+    case 'KR':
+      return 'kr';
+    case 'BR1':
+      return 'br1';
+    default:
+      return String(platform).toLowerCase();
+  }
+};
+
+let cachedPatchVersion: string | null = null;
+let cachedPatchVersionTimestamp = 0;
+
+/**
+ * Dynamically fetches the current League of Legends patch from Data Dragon
+ */
+export const fetchLatestPatchVersion = async (): Promise<string> => {
+  const now = Date.now();
+  if (cachedPatchVersion && now - cachedPatchVersionTimestamp < 3600000) {
+    return cachedPatchVersion;
+  }
+  try {
+    const res = await fetch('https://ddragon.leagueoflegends.com/api/versions.json');
+    if (res.ok) {
+      const versions = await res.json();
+      if (Array.isArray(versions) && versions.length > 0 && typeof versions[0] === 'string') {
+        cachedPatchVersion = versions[0];
+        cachedPatchVersionTimestamp = now;
+        return cachedPatchVersion;
+      }
+    }
+  } catch (err) {
+    console.warn('Could not fetch latest Data Dragon version, using fallback patch.', err);
+  }
+  return cachedPatchVersion || '15.3.1';
+};
+
+/**
+ * Fetches active game for summoner using official Riot Spectator-v5 API
+ * Returns null if summoner is not in an active game (HTTP 404).
+ */
+export const fetchActiveGameByPuuid = async (
+  puuid: string,
+  platform: PlatformRegion,
+  apiKey: string
+): Promise<RiotActiveGame | null> => {
+  if (!puuid || !apiKey) {
+    throw new Error('Faltan parámetros requeridos (PUUID o API Key).');
+  }
+
+  const platformRouting = getPlatformRouting(platform);
+  const cleanPuuid = encodeURIComponent(puuid.trim());
+  const url = `https://${platformRouting}.api.riotgames.com/lol/spectator/v5/active-games/by-summoner/${cleanPuuid}?api_key=${apiKey.trim()}`;
+
+  const res = await fetchRiotWithRetry(url);
+
+  if (res.status === 404) {
+    // 404 in spectator-v5 signifies summoner is not currently in an active game
+    return null;
+  }
+
+  if (!res.ok) {
+    if (res.status === 401 || res.status === 403) {
+      throw new Error('Riot API Key inválida o expirada. Por favor verifica tu API Key en la Configuración.');
+    }
+    if (res.status === 429) {
+      throw new Error('Límite de peticiones de Riot API alcanzado (Rate Limit). Intenta de nuevo en unos momentos.');
+    }
+    throw new Error(`Error de conexión con Riot Spectator API (HTTP ${res.status}).`);
+  }
+
+  const data = await res.json();
+  return data as RiotActiveGame;
+};
+

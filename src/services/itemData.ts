@@ -98,6 +98,30 @@ export const LOL_ITEMS: Record<number, ItemInfo> = {
   3109: { id: 3109, name: 'Promesa del Caballero', category: 'SUPPORT', tags: ['Redirección de Daño de Aliado'] },
   2065: { id: 2065, name: 'Canto de Guerra de Shurelya', category: 'SUPPORT', tags: ['Velocidad de Movimiento de Equipo'] },
 
+  // --- STARTER ITEMS ---
+  1056: { id: 1056, name: 'Anillo de Doran', category: 'STARTER', tags: ['AP Inicial', 'Regeneración Maná'] },
+  1055: { id: 1055, name: 'Espada de Doran', category: 'STARTER', tags: ['AD Inicial', 'Vida', 'Omnivampirismo'] },
+  1054: { id: 1054, name: 'Escudo de Doran', category: 'STARTER', tags: ['Regeneración de Vida', 'Anti-Poke'] },
+  1082: { id: 1082, name: 'Sello de la Oscuridad', category: 'STARTER', tags: ['Bola de Nieve AP'] },
+  3865: { id: 3865, name: 'Atlas Mundial', category: 'STARTER', tags: ['Soporte', 'Generación de Oro'] },
+  1101: { id: 1101, name: 'Cría de Caminabrisas', category: 'STARTER', tags: ['Jungla', 'Velocidad de Movimiento'] },
+  1102: { id: 1102, name: 'Brote de Pisotesta', category: 'STARTER', tags: ['Jungla', 'Escudo y Tenacidad'] },
+  1103: { id: 1103, name: 'Cachorro Garrafuego', category: 'STARTER', tags: ['Jungla', 'Daño y Ralentización'] },
+  2003: { id: 2003, name: 'Poción de Vida', category: 'STARTER', tags: ['Curación'] },
+  2031: { id: 2031, name: 'Poción Reutilizable', category: 'STARTER', tags: ['Sustain Recargable'] },
+  2033: { id: 2033, name: 'Poción de Corrupción', category: 'STARTER', tags: ['Sustain de Maná y Vida'] },
+  3070: { id: 3070, name: 'Lágrima de la Diosa', category: 'STARTER', tags: ['Acumulación de Maná'] },
+
+  // --- COMPONENTES & SITUACIONALES EXTRA ---
+  6667: { id: 6667, name: 'Bastión de Kaenic', category: 'TANK', tags: ['Escudo Antimagia Masivo', 'MR'] },
+  3001: { id: 3001, name: 'Máscara Abisal', category: 'TANK', tags: ['Reducción MR Enemiga', 'MR'] },
+  3026: { id: 3026, name: 'Ángel de la Guarda', category: 'AD', tags: ['Resurrección', 'Armadura'] },
+  3140: { id: 3140, name: 'Fajín de Mercurio', category: 'COMPONENT', tags: ['Activa de Limpieza de CC (QSS)'] },
+  3139: { id: 3139, name: 'Cimitarra Mercurial', category: 'AD', tags: ['Limpieza de CC', 'MR', 'Velocidad'] },
+  6673: { id: 6673, name: 'Arcoescudo Inmortal', category: 'AD', tags: ['Escudo Salvavidas', 'Crítico'] },
+  3179: { id: 3179, name: 'Espada Umbría', category: 'AD', tags: ['Control de Wards', 'Letalidad'] },
+  3004: { id: 3004, name: 'Manamune', category: 'AD', tags: ['Pico de Maná a Daño'] },
+
   // --- COMPONENTES CLAVE ---
   3123: { id: 3123, name: 'Llamada del Verdugo', category: 'COMPONENT', tags: ['Anti-curación Temprana (800g)'] },
   3916: { id: 3916, name: 'Orbe del Olvido', category: 'COMPONENT', tags: ['Anti-curación Mágica Temprana (800g)'] },
@@ -116,6 +140,21 @@ export const LOL_ITEMS: Record<number, ItemInfo> = {
 };
 
 /**
+ * Obtiene el objeto de información por su ID
+ */
+export const getItemById = (itemId: number): ItemInfo | undefined => {
+  if (!itemId || itemId <= 0) return undefined;
+  return LOL_ITEMS[itemId];
+};
+
+/**
+ * Valida si un ID de ítem existe en la base de datos oficial
+ */
+export const isValidItem = (itemId: number): boolean => {
+  return typeof itemId === 'number' && itemId > 0 && !!LOL_ITEMS[itemId];
+};
+
+/**
  * Obtiene el nombre en español de un ítem por su ID
  */
 export const getItemName = (itemId: number): string => {
@@ -131,3 +170,4 @@ export const getBuildItemNames = (itemIds: number[]): string[] => {
     .filter((id) => id > 0)
     .map((id) => getItemName(id));
 };
+
