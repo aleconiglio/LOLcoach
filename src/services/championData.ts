@@ -1,8 +1,11 @@
+import { getCurrentPatchSync } from './patchVerificationService';
+
 export interface ChampionInfo {
   id: string;
   name: string;
   normalizedName: string;
 }
+
 
 export const LOL_CHAMPIONS: ChampionInfo[] = [
   { id: 'Aatrox', name: 'Aatrox', normalizedName: 'aatrox' },
@@ -79,6 +82,7 @@ export const LOL_CHAMPIONS: ChampionInfo[] = [
   { id: 'Leona', name: 'Leona', normalizedName: 'leona' },
   { id: 'Lillia', name: 'Lillia', normalizedName: 'lillia' },
   { id: 'Lissandra', name: 'Lissandra', normalizedName: 'lissandra' },
+  { id: 'Locke', name: 'Locke', normalizedName: 'locke' },
   { id: 'Lucian', name: 'Lucian', normalizedName: 'lucian' },
   { id: 'Lulu', name: 'Lulu', normalizedName: 'lulu' },
   { id: 'Lux', name: 'Lux', normalizedName: 'lux' },
@@ -86,6 +90,7 @@ export const LOL_CHAMPIONS: ChampionInfo[] = [
   { id: 'Malzahar', name: 'Malzahar', normalizedName: 'malzahar' },
   { id: 'Maokai', name: 'Maokai', normalizedName: 'maokai' },
   { id: 'MasterYi', name: 'Master Yi', normalizedName: 'master yi' },
+  { id: 'Mel', name: 'Mel', normalizedName: 'mel' },
   { id: 'Milio', name: 'Milio', normalizedName: 'milio' },
   { id: 'MissFortune', name: 'Miss Fortune', normalizedName: 'miss fortune' },
   { id: 'MonkeyKing', name: 'Wukong', normalizedName: 'wukong monkeyking' },
@@ -167,6 +172,8 @@ export const LOL_CHAMPIONS: ChampionInfo[] = [
   { id: 'Yone', name: 'Yone', normalizedName: 'yone' },
   { id: 'Yorick', name: 'Yorick', normalizedName: 'yorick' },
   { id: 'Yuumi', name: 'Yuumi', normalizedName: 'yuumi' },
+  { id: 'Yunara', name: 'Yunara', normalizedName: 'yunara' },
+  { id: 'Zaahen', name: 'Zaahen', normalizedName: 'zaahen' },
   { id: 'Zac', name: 'Zac', normalizedName: 'zac' },
   { id: 'Zed', name: 'Zed', normalizedName: 'zed' },
   { id: 'Zeri', name: 'Zeri', normalizedName: 'zeri' },
@@ -179,17 +186,27 @@ export const LOL_CHAMPIONS: ChampionInfo[] = [
 /**
  * Returns Riot DataDragon CDN Champion Icon URL
  */
-export const getChampionIconUrl = (championName: string): string => {
+export const getChampionIconUrl = (championName: string | number): string => {
   if (!championName) return '';
+  const str = String(championName).trim();
+
+  // Handle pure numeric Riot Champion IDs (e.g. 805 -> Locke, 799 -> Ambessa)
+  if (/^\d+$/.test(str)) {
+    const numId = parseInt(str, 10);
+    const meta = getChampionByNumericId(numId);
+    if (meta && meta.id) {
+      return `https://ddragon.leagueoflegends.com/cdn/${getCurrentPatchSync()}/img/champion/${meta.id}.png`;
+    }
+  }
 
   // Normalize champion name for DataDragon API format
   const found = LOL_CHAMPIONS.find(
     (c) =>
-      c.name.toLowerCase() === championName.toLowerCase() ||
-      c.id.toLowerCase() === championName.toLowerCase()
+      c.name.toLowerCase() === str.toLowerCase() ||
+      c.id.toLowerCase() === str.toLowerCase()
   );
 
-  let key = found ? found.id : championName.replace(/[^a-zA-Z0-9]/g, '');
+  let key = found ? found.id : str.replace(/[^a-zA-Z0-9]/g, '');
 
   // Handle special Riot DataDragon keys
   const specialMap: Record<string, string> = {
@@ -217,6 +234,14 @@ export const getChampionIconUrl = (championName: string): string => {
     smolder: 'Smolder',
     hwei: 'Hwei',
     naafiri: 'Naafiri',
+    locke: 'Locke',
+    mel: 'Mel',
+    yunara: 'Yunara',
+    zaahen: 'Zaahen',
+    briar: 'Briar',
+    vex: 'Vex',
+    sett: 'Sett',
+    lillia: 'Lillia',
   };
 
   const lowerKey = key.toLowerCase();
@@ -227,7 +252,7 @@ export const getChampionIconUrl = (championName: string): string => {
     key = key.charAt(0).toUpperCase() + key.slice(1);
   }
 
-  return `https://ddragon.leagueoflegends.com/cdn/15.3.1/img/champion/${key}.png`;
+  return `https://ddragon.leagueoflegends.com/cdn/${getCurrentPatchSync()}/img/champion/${key}.png`;
 };
 
 /**
@@ -261,7 +286,7 @@ export const handleChampionImageError = (
  */
 export const getItemIconUrl = (itemId: number): string => {
   if (!itemId || itemId === 0) return '';
-  return `https://ddragon.leagueoflegends.com/cdn/15.3.1/img/item/${itemId}.png`;
+  return `https://ddragon.leagueoflegends.com/cdn/${getCurrentPatchSync()}/img/item/${itemId}.png`;
 };
 
 // ==========================================
@@ -464,6 +489,22 @@ export const CHAMPION_METADATA_LIST: ChampionMetadata[] = [
   { id: 'Zilean', numericId: 26, name: 'Zilean', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_ENCHANTER', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: true, skillOrder: 'Q > E > W', keystoneId: 8214, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
   { id: 'Zoe', numericId: 142, name: 'Zoe', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > E > W', keystoneId: 8112, primaryTree: 'Dominación', secondaryTree: 'Brujería' },
   { id: 'Zyra', numericId: 143, name: 'Zyra', role: 'SUPPORT', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > E > W', keystoneId: 8229, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  // Modern Champions
+  { id: 'Ambessa', numericId: 799, name: 'Ambessa', role: 'TOP', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Valor' },
+  { id: 'Locke', numericId: 805, name: 'Locke', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8229, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Mel', numericId: 800, name: 'Mel', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8229, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Yunara', numericId: 804, name: 'Yunara', role: 'BOT', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: false, hasHeavyHealing: false, isHighBurst: true, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8008, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Zaahen', numericId: 904, name: 'Zaahen', role: 'TOP', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Valor' },
+  { id: 'KSante', numericId: 897, name: 'K\'Sante', role: 'TOP', damageType: 'AD', combatClass: 'TANK', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8437, primaryTree: 'Valor', secondaryTree: 'Inspiración' },
+  { id: 'Milio', numericId: 902, name: 'Milio', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_ENCHANTER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8214, primaryTree: 'Brujería', secondaryTree: 'Inspiración' },
+  { id: 'Naafiri', numericId: 950, name: 'Naafiri', role: 'MID', damageType: 'AD', combatClass: 'ASSASSIN_AD', hasHardCc: false, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8112, primaryTree: 'Dominación', secondaryTree: 'Precisión' },
+  { id: 'Nilah', numericId: 895, name: 'Nilah', role: 'BOT', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > E > W', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Renata', numericId: 888, name: 'Renata Glasc', role: 'SUPPORT', damageType: 'AP', combatClass: 'SUPPORT_ENCHANTER', hasHardCc: true, hasHeavyHealing: false, isHighBurst: false, isHighRange: false, skillOrder: 'E > W > Q', keystoneId: 8465, primaryTree: 'Valor', secondaryTree: 'Inspiración' },
+  { id: 'Sett', numericId: 875, name: 'Sett', role: 'TOP', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Valor' },
+  { id: 'Lillia', numericId: 876, name: 'Lillia', role: 'JUNGLE', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: true, isHighBurst: false, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8010, primaryTree: 'Precisión', secondaryTree: 'Brujería' },
+  { id: 'Smolder', numericId: 901, name: 'Smolder', role: 'BOT', damageType: 'AD', combatClass: 'MARKSMAN', hasHardCc: false, hasHeavyHealing: false, isHighBurst: false, isHighRange: true, skillOrder: 'Q > W > E', keystoneId: 8008, primaryTree: 'Precisión', secondaryTree: 'Inspiración' },
+  { id: 'Vex', numericId: 711, name: 'Vex', role: 'MID', damageType: 'AP', combatClass: 'MAGE', hasHardCc: true, hasHeavyHealing: false, isHighBurst: true, isHighRange: false, skillOrder: 'Q > W > E', keystoneId: 8112, primaryTree: 'Dominación', secondaryTree: 'Brujería' },
+  { id: 'Briar', numericId: 233, name: 'Briar', role: 'JUNGLE', damageType: 'AD', combatClass: 'BRUISER', hasHardCc: true, hasHeavyHealing: true, isHighBurst: true, isHighRange: false, skillOrder: 'W > Q > E', keystoneId: 8005, primaryTree: 'Precisión', secondaryTree: 'Dominación' },
 ];
 
 export const CHAMPION_METADATA_MAP: Record<number, ChampionMetadata> = {};
@@ -496,18 +537,23 @@ export const getChampionByName = (nameOrId: string): ChampionMetadata | undefine
  * Resuelve metadatos seguros de un campeón por ID numérico o nombre, con fallback robusto
  */
 export const resolveChampionInfo = (idOrName: number | string): ChampionMetadata => {
-  if (typeof idOrName === 'number') {
-    const found = getChampionByNumericId(idOrName);
+  const cleanStr = String(idOrName || '').trim();
+  const numericVal = typeof idOrName === 'number'
+    ? idOrName
+    : (/^\d+$/.test(cleanStr) ? parseInt(cleanStr, 10) : undefined);
+
+  if (numericVal !== undefined) {
+    const found = getChampionByNumericId(numericVal);
     if (found) return found;
   }
-  const foundByName = getChampionByName(String(idOrName));
+  const foundByName = getChampionByName(cleanStr);
   if (foundByName) return foundByName;
 
   // Fallback seguro si es un campeón nuevo no registrado
-  const nameStr = String(idOrName);
+  const nameStr = cleanStr;
   return {
     id: nameStr.replace(/[^a-zA-Z0-9]/g, '') || 'Unknown',
-    numericId: typeof idOrName === 'number' ? idOrName : 9999,
+    numericId: numericVal !== undefined ? numericVal : 9999,
     name: nameStr || 'Campeón Desconocido',
     role: 'MID',
     damageType: 'AD',
@@ -521,6 +567,74 @@ export const resolveChampionInfo = (idOrName: number | string): ChampionMetadata
     primaryTree: 'Precisión',
     secondaryTree: 'Inspiración',
   };
+};
+
+/**
+ * Sincroniza dinámicamente el catálogo oficial de campeones de Riot Data Dragon
+ * Garantiza que cualquier campeón recién lanzado sea indexado por su clave numérica
+ */
+export const syncOfficialChampionCatalog = async (patch?: string): Promise<number> => {
+  const targetPatch = patch || getCurrentPatchSync();
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const res = await fetch(`https://ddragon.leagueoflegends.com/cdn/${targetPatch}/data/es_ES/champion.json`, {
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.data) {
+        let loaded = 0;
+        Object.values(data.data).forEach((raw: any) => {
+          const numId = parseInt(raw.key, 10);
+          if (!isNaN(numId)) {
+            if (!CHAMPION_METADATA_MAP[numId]) {
+              const tags: string[] = raw.tags || [];
+              let combatClass: ChampionMetadata['combatClass'] = 'BRUISER';
+              if (tags.includes('Marksman')) combatClass = 'MARKSMAN';
+              else if (tags.includes('Mage')) combatClass = 'MAGE';
+              else if (tags.includes('Tank')) combatClass = 'TANK';
+              else if (tags.includes('Assassin')) combatClass = 'ASSASSIN_AD';
+              else if (tags.includes('Support')) combatClass = 'SUPPORT_ENCHANTER';
+
+              const meta: ChampionMetadata = {
+                id: raw.id,
+                numericId: numId,
+                name: raw.name || raw.id,
+                role: 'MID',
+                damageType: tags.includes('Mage') ? 'AP' : 'AD',
+                combatClass,
+                hasHardCc: false,
+                hasHeavyHealing: false,
+                isHighBurst: tags.includes('Assassin') || tags.includes('Mage'),
+                isHighRange: tags.includes('Marksman') || tags.includes('Mage'),
+                skillOrder: 'Q > W > E',
+                keystoneId: tags.includes('Mage') ? 8229 : 8010,
+                primaryTree: tags.includes('Mage') ? 'Brujería' : 'Precisión',
+                secondaryTree: 'Inspiración',
+              };
+              CHAMPION_METADATA_MAP[numId] = meta;
+              CHAMPION_METADATA_LIST.push(meta);
+            }
+            if (!LOL_CHAMPIONS.some((c) => c.id === raw.id)) {
+              LOL_CHAMPIONS.push({
+                id: raw.id,
+                name: raw.name || raw.id,
+                normalizedName: (raw.name || raw.id).toLowerCase(),
+              });
+            }
+            loaded++;
+          }
+        });
+        return loaded;
+      }
+    }
+  } catch {
+    // Ignore fetch failure in offline/fallback mode
+  }
+  return CHAMPION_METADATA_LIST.length;
 };
 
 /**

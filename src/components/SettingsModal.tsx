@@ -17,6 +17,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const [riotKey, setRiotKey] = useState(settings.riotApiKey);
   const [groqKey, setGroqKey] = useState(settings.groqApiKey);
+  const [searchKey, setSearchKey] = useState(settings.searchApiKey || '');
   const [isDemoMode, setIsDemoMode] = useState(settings.isDemoMode);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
@@ -27,6 +28,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     onSave({
       riotApiKey: riotKey,
       groqApiKey: groqKey,
+      searchApiKey: searchKey,
       isDemoMode,
     });
     setSavedSuccess(true);
@@ -35,6 +37,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       onClose();
     }, 800);
   };
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
@@ -116,8 +119,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </p>
           </div>
 
+          {/* Web Research API Key (Optional) */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-hextech-gold flex items-center gap-1.5 font-cinzel">
+              <span className="text-sky-400">🌐</span>
+              API Key de Búsqueda Web (Tavily / Serper) [Opcional]
+            </label>
+            <input
+              type="password"
+              value={searchKey}
+              onChange={(e) => setSearchKey(e.target.value)}
+              placeholder="tvly-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (Opcional)"
+              className="w-full px-3 py-2 text-sm bg-hextech-black/80 border border-hextech-gold/30 rounded focus:border-hextech-gold text-gray-100 placeholder-gray-600 focus:outline-none transition-all font-mono"
+            />
+            <p className="text-[11px] text-gray-400">
+              Opcional. Si no se introduce, el sistema investiga en la web automáticamente mediante DuckDuckGo + Riot Data Dragon oficial sin coste.
+            </p>
+          </div>
+
           {/* Demo Mode Checkbox */}
           <div className="pt-2 border-t border-hextech-gold/20 flex items-center justify-between">
+
             <div>
               <span className="text-xs font-semibold text-gray-200 block font-cinzel">Modo Demo / Prueba Rápidas</span>
               <span className="text-[11px] text-gray-400 block">Usar datos simulados para probar la UI e IA de coaching sin consumos de API.</span>

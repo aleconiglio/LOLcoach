@@ -138,7 +138,68 @@ export interface AIAnalysisReport {
 export interface AppSettings {
   riotApiKey: string;
   groqApiKey: string;
+  searchApiKey?: string;
   isDemoMode: boolean;
+}
+
+// ==========================================
+// DEEP WEB RESEARCH & TRACEABILITY TYPES
+// ==========================================
+
+export type ConfidenceLevel = 'HIGH' | 'MEDIUM' | 'LOW';
+
+export interface WebResearchSource {
+  id: string;
+  name: string;
+  url: string;
+  type: 'OFFICIAL_RIOT' | 'STATISTICS_SITE' | 'HIGH_ELO_GUIDE' | 'WEB_SEARCH';
+  patch: string;
+  sampleSize?: number;
+  winRate?: number;
+  pickRate?: number;
+  reliability: 'HIGH' | 'MEDIUM' | 'LOW';
+  timestamp: number;
+  excerpt?: string;
+}
+
+export interface BuildRecommendationTraceability {
+  patch: string;
+  generatedAt: number;
+  researchAt: number;
+  sources: WebResearchSource[];
+  confidenceLevel: ConfidenceLevel;
+  evidenceQualityText: string;
+  isNewPatchWarning?: boolean;
+  isSampleInsufficient?: boolean;
+  sampleSize?: number;
+  contradictionsDetected?: string[];
+  engineVersion: string;
+  validationResult: {
+    isValid: boolean;
+    checkedItemsCount: number;
+    checkedRunesCount: number;
+    replacedItems?: string[];
+    replacedRunes?: string[];
+    errors: string[];
+  };
+}
+
+export interface GameVersionInfo {
+  patch: string;
+  season?: number;
+  releaseDate?: string;
+  isNewPatch: boolean;
+  lastCheckedTimestamp: number;
+  isFallback: boolean;
+}
+
+export interface KnowledgeBaseStatus {
+  patch: string;
+  lastUpdatedTimestamp: number;
+  itemCount: number;
+  runeCount: number;
+  isSynchronized: boolean;
+  sourcesAvailable: string[];
 }
 
 // ==========================================
@@ -252,6 +313,8 @@ export interface BuildRecommendationItem {
 export interface BuildRecommendation {
   patch: string;
   playerChampion: string;
+  confidenceLevel?: ConfidenceLevel;
+  traceability?: BuildRecommendationTraceability;
   startingItem: {
     primary: { id: number; name: string; reason: string };
     alternative?: { id: number; name: string; reason: string };
@@ -274,6 +337,14 @@ export interface BuildRecommendation {
     name: string;
     reason: string;
     triggerMatched: boolean;
+    tier?: 'RECOMMENDED_MATCH' | 'SITUATIONAL_ALTERNATIVE' | 'LOW_PRIORITY';
+    priority?: 'HIGH' | 'MEDIUM' | 'LOW';
+    championSynergy?: string;
+    evidenceText?: string;
+    alternativeItem?: { id: number; name: string };
+    avoidWhen?: string;
+    confidenceScore?: number;
+    patch?: string;
   }>;
   runes: {
     primaryTree: string;
@@ -298,4 +369,5 @@ export interface BuildRecommendation {
     tacticalSummary: string;
   };
 }
+
 

@@ -7,6 +7,10 @@ import {
 import { resolveChampionInfo, ChampionMetadata } from './championData';
 import { getItemById, getItemName, isValidItem } from './itemData';
 import { getRuneById, getRuneName, isValidRune } from './runeData';
+import { validateBuildRecommendation } from './recommendationValidationService';
+import { researchChampionBuild } from './championBuildResearchService';
+import { getCurrentPatchSync } from './patchVerificationService';
+import { generateSituationalRecommendations } from './championCompatibilityService';
 
 export interface BuildRecommendationInput {
   patch: string;
@@ -15,7 +19,9 @@ export interface BuildRecommendationInput {
   allies: ActiveGameChampion[];
   enemies: ActiveGameChampion[];
   compositionAnalysis: CompositionAnalysis;
+  searchApiKey?: string;
 }
+
 
 export const generateBuildRecommendation = (
   input: BuildRecommendationInput
@@ -301,6 +307,8 @@ export const generateBuildRecommendation = (
   // Safety filler pool to ensure guaranteed 6 items in build order
   const genericFillers = meta.damageType === 'AP'
     ? [3089, 3135, 3157, 4645, 6653, 3137, 3116, 3165]
+    : meta.combatClass === 'MARKSMAN'
+    ? [3031, 3094, 3036, 3072, 6676, 3046, 3153, 3033]
     : meta.combatClass === 'TANK' || meta.combatClass === 'SUPPORT_TANK'
     ? [3068, 6665, 3075, 6667, 3110, 3065, 3143]
     : [3071, 3053, 6333, 3026, 3161, 6610, 3156, 3078];
@@ -313,51 +321,14 @@ export const generateBuildRecommendation = (
   // Ensure exactly 6 items in coreBuild order
   const guaranteedCore = coreBuild.slice(0, 6);
 
-  // 4. SITUATIONAL ITEMS
-  const situationalItems: BuildRecommendation['situationalItems'] = [
-    {
-      condition: 'Mucho Daño Físico / Ráfaga Asesina AD',
-      id: 3157,
-      name: 'Reloj de Arena de Zhonya',
-      reason: 'Proporciona 50 de armadura y la activa de estasis invulnerable de 2.5s para frustrar el combo de sus asesinos.',
-      triggerMatched: isEnemyHeavyAd || isBurstThreatHigh,
-    },
-    {
-      condition: 'Mucha Resistencia Mágica enemiga acumulada',
-      id: 3135,
-      name: 'Báculo del Vacío',
-      reason: 'Ignora el 40% de la resistencia mágica enemiga, asegurando que tu daño no decaiga ante ítems de MR.',
-      triggerMatched: comp.resistanceBreakdown.highResistanceThreats.length > 0 || isHeavyAntiTankNeeded,
-    },
-    {
-      condition: 'Mucha Vida / Múltiples Tanques (2+)',
-      id: 6653,
-      name: 'Tormento de Liandry',
-      reason: 'Drena un 2% de la vida máxima por segundo de los rivales, destruyendo la durabilidad de sus tanques.',
-      triggerMatched: isHeavyAntiTankNeeded,
-    },
-    {
-      condition: 'Curación Masiva Enemiga (Sustain / Drenaje)',
-      id: 3165,
-      name: 'Morellonomicón',
-      reason: 'Aplica Heridas Graves (40% de reducción de curación), impidiendo que sus campeones se regeneren en pelea.',
-      triggerMatched: isGrievousWoundsUrgent,
-    },
-    {
-      condition: 'Control de Masas Pesado / Iniciación Sorpresiva',
-      id: 3102,
-      name: 'Velo del Hada de la Muerte',
-      reason: 'Bloquea la primera habilidad enemiga con un velo pasivo, evitando ser cazado por aturdimientos o ganchos.',
-      triggerMatched: isHeavyCc,
-    },
-    {
-      condition: 'Daño Mágico Explosivo / Asesinos AP',
-      id: 6667,
-      name: 'Bastión de Kaenic',
-      reason: 'Otorga un escudo de daño mágico equivalente al 18% de tu vida máxima tras 12s sin recibir daño mágico.',
-      triggerMatched: isEnemyHeavyAp,
-    },
-  ];
+  // 4. SITUATIONAL ITEMS: Evaluated through 3-Layer Compatibility & Scoring Motor
+  const excludedItemIds = [bootsId];
+  const situationalItems: BuildRecommendation['situationalItems'] = generateSituationalRecommendations(
+    meta.name,
+    comp,
+    excludedItemIds,
+    patch || getCurrentPatchSync()
+  );
 
   // 5. RUNES RECOMMENDATION
   const keystoneInfo = getRuneById(meta.keystoneId) || getRuneById(8112)!;
@@ -465,8 +436,8 @@ export const generateBuildRecommendation = (
     reasons.push('La curva de objetos maximiza el pico de poder (Power Spike) de 2 y 3 ítems según las fortalezas del campeón.');
   }
 
-  return {
-    patch: patch || '15.3.1',
+  const rawRec: BuildRecommendation = {
+    patch: patch || getCurrentPatchSync(),
     playerChampion: meta.name,
     startingItem: {
       primary: startingPrimary,
@@ -499,7 +470,57 @@ export const generateBuildRecommendation = (
     explanation: {
       title: `Estrategia de Build Adaptada vs ${enemies.length} Rivales`,
       reasons: reasons.slice(0, 4),
-      tacticalSummary: `Configuración diseñada para explotar la debilidad estructural del equipo enemigo en el parche ${patch || '15.3.1'}.`,
+      tacticalSummary: `Configuración diseñada para explotar la debilidad estructural del equipo enemigo en el parche ${patch || getCurrentPatchSync()}.`,
     },
   };
+
+  const validated = validateBuildRecommendation(rawRec);
+  return validated.recommendation;
 };
+
+/**
+ * Async deep web research recommendation engine
+ * Investigates current patch, queries stat sites, adapts to enemy comp, and validates all items & runes
+ */
+export const generateDeepResearchBuildRecommendation = async (
+  input: BuildRecommendationInput & { searchApiKey?: string }
+): Promise<BuildRecommendation> => {
+  const { patch, playerChampion, playerRole, allies, enemies, compositionAnalysis, searchApiKey } = input;
+  const targetPatch = patch || getCurrentPatchSync();
+  const meta: ChampionMetadata = resolveChampionInfo(playerChampion);
+  const effectiveRole: RoleFilter = playerRole || meta.role;
+
+  // 1. Deep web research across Riot Data Dragon & live statistics
+  const research = await researchChampionBuild(meta.name, effectiveRole, targetPatch, searchApiKey);
+
+  // 2. Base composition adaptation
+  const baseRec = generateBuildRecommendation({
+    patch: targetPatch,
+    playerChampion: meta.name,
+    playerRole: effectiveRole,
+    allies,
+    enemies,
+    compositionAnalysis,
+  });
+
+  // 3. Attach skill order from research
+  if (research.skillOrder) {
+    baseRec.skillOrder = {
+      levels: baseRec.skillOrder?.levels || [],
+      maxOrder: research.skillOrder.maxOrder,
+      first3Levels: research.skillOrder.first3Levels,
+    };
+  }
+
+  // 4. Enforce final validation gatekeeper
+  const validated = validateBuildRecommendation(
+    baseRec,
+    research.sources,
+    research.sampleSize,
+    research.confidenceScore,
+    research.evidenceQualityText
+  );
+
+  return validated.recommendation;
+};
+

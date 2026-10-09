@@ -75,6 +75,9 @@ export const LOL_ITEMS: Record<number, ItemInfo> = {
   6610: { id: 6610, name: 'Cielo Desgarrado', category: 'AD', tags: ['Primer Golpe Crítico', 'Curación'] },
   3161: { id: 3161, name: 'Lanza de Shojin', category: 'AD', tags: ['Aceleración Básica', 'Amplificación de Daño'] },
   3181: { id: 3181, name: 'Rompecascos', category: 'AD', tags: ['Splitpush', 'Potenciación de Súbditos'] },
+  6609: { id: 6609, name: 'Espada-Sierra Quimopúnica', category: 'AD', tags: ['Heridas Graves', 'Vida', 'Aceleración'] },
+  6035: { id: 6035, name: 'Amanecer de Mercurio', category: 'AD', tags: ['Limpieza de CC', 'Resistencia Mágica', 'Vida'] },
+  3742: { id: 3742, name: 'Coraza del Muerto', category: 'TANK', tags: ['Armadura', 'Velocidad de Movimiento', 'Ralentización'] },
 
   // --- TANQUES ---
   3068: { id: 3068, name: 'Égida de Fuego Solar', category: 'TANK', tags: ['Armadura', 'Daño de Área'] },

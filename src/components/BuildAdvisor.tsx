@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Shield, 
   Swords, 
@@ -17,6 +17,11 @@ import {
   ArrowRight,
   Sliders,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  Database,
+  Globe,
   Info
 } from 'lucide-react';
 import { 
@@ -24,13 +29,20 @@ import {
   AppSettings, 
   ActiveGameData, 
   CompositionAnalysis, 
-  BuildRecommendation 
+  BuildRecommendation,
+  KnowledgeBaseStatus
 } from '../types';
 import { getActiveGameData, getMockActiveGame, clearActiveGameCache } from '../services/activeGameService';
 import { analyzeComposition } from '../services/compositionAnalyzer';
-import { generateBuildRecommendation } from '../services/buildRecommendationEngine';
+import { generateDeepResearchBuildRecommendation, generateBuildRecommendation } from '../services/buildRecommendationEngine';
+import { validateBuildRecommendation } from '../services/recommendationValidationService';
+import { 
+  checkAndAutoUpdateKnowledgeBase, 
+  forceUpdateKnowledgeBase, 
+  getKnowledgeBaseStatus 
+} from '../services/knowledgeBaseManager';
 import { generateAIExplanation } from '../services/aiExplanationService';
-import { getChampionIconUrl, getItemIconUrl, handleChampionImageError } from '../services/championData';
+import { getChampionIconUrl, getItemIconUrl, handleChampionImageError, resolveChampionInfo } from '../services/championData';
 import { getRuneIconUrl } from '../services/runeData';
 
 interface BuildAdvisorProps {
@@ -63,9 +75,37 @@ export const BuildAdvisor: React.FC<BuildAdvisorProps> = ({
   const [recommendation, setRecommendation] = useState<BuildRecommendation | null>(null);
   const [isCachedResult, setIsCachedResult] = useState(false);
 
+  // Deep research & knowledge base state
+  const [isSourcesOpen, setIsSourcesOpen] = useState(false);
+  const [kbStatus, setKbStatus] = useState<KnowledgeBaseStatus>(getKnowledgeBaseStatus());
+  const [isSyncingKb, setIsSyncingKb] = useState(false);
+  const [kbSyncMessage, setKbSyncMessage] = useState<string | null>(null);
+
   // Quick preset tester for simulation
   const [simulationMode, setSimulationMode] = useState(false);
   const [selectedSimPreset, setSelectedSimPreset] = useState<'standard' | 'heavy_ad' | 'heavy_ap' | 'heavy_tanks' | 'heavy_healers'>('standard');
+
+  // Auto-detect new patches and synchronize official dataset on load
+  useEffect(() => {
+    checkAndAutoUpdateKnowledgeBase().then(() => {
+      setKbStatus(getKnowledgeBaseStatus());
+    });
+  }, []);
+
+  const handleForceSyncKb = async () => {
+    setIsSyncingKb(true);
+    setKbSyncMessage(null);
+    try {
+      const res = await forceUpdateKnowledgeBase();
+      setKbStatus(getKnowledgeBaseStatus());
+      setKbSyncMessage(`¡Base de Conocimiento Actualizada! Parche oficial ${res.patch} (${res.itemCount} objetos, ${res.runeCount} runas).`);
+      setTimeout(() => setKbSyncMessage(null), 5000);
+    } catch {
+      setKbSyncMessage('Error al sincronizar datos oficiales con Riot Data Dragon.');
+    } finally {
+      setIsSyncingKb(false);
+    }
+  };
 
   const handleAnalyzeMatch = async (forceBypassCache = false) => {
     setErrorMessage(null);
@@ -119,32 +159,44 @@ export const BuildAdvisor: React.FC<BuildAdvisorProps> = ({
       await new Promise((r) => setTimeout(r, 450));
       const compAnalysis = analyzeComposition(gameData.enemies, gameData.allies, gameData.playerChampion);
 
-      // Step 3: Generating deterministic adaptive recommendation
+      // Step 3: Deep Web Research & Structured Validation
       setLoadingStep('generating');
       await new Promise((r) => setTimeout(r, 450));
-      const baseRec = generateBuildRecommendation({
+      
+      const deepRec = await generateDeepResearchBuildRecommendation({
         patch: gameData.patch,
         playerChampion: gameData.playerChampion.championName,
         playerRole: gameData.playerChampion.role,
         allies: gameData.allies,
         enemies: gameData.enemies,
         compositionAnalysis: compAnalysis,
+        searchApiKey: settings.searchApiKey,
       });
 
       // Optional: AI natural language enrichment if Groq is available
       if (settings.groqApiKey && !settings.isDemoMode) {
         try {
-          const aiExp = await generateAIExplanation(baseRec, compAnalysis, settings.groqApiKey);
-          baseRec.explanation.reasons = aiExp.reasons;
-          baseRec.explanation.tacticalSummary = aiExp.tacticalSummary;
+          const aiExp = await generateAIExplanation(deepRec, compAnalysis, settings.groqApiKey);
+          deepRec.explanation.reasons = aiExp.reasons;
+          deepRec.explanation.tacticalSummary = aiExp.tacticalSummary;
+
+          // Re-validate to guard against LLM hallucinating removed items
+          const validated = validateBuildRecommendation(
+            deepRec,
+            deepRec.traceability?.sources,
+            deepRec.traceability?.sampleSize,
+            deepRec.confidenceLevel,
+            deepRec.traceability?.evidenceQualityText
+          );
+          deepRec.explanation.reasons = validated.recommendation.explanation.reasons;
         } catch {
-          // Keep deterministic fallback
+          // Keep deterministic verified explanation
         }
       }
 
       setActiveGame(gameData);
       setComposition(compAnalysis);
-      setRecommendation(baseRec);
+      setRecommendation(deepRec);
       setIsCachedResult(!forceBypassCache && !simulationMode);
     } catch (err: any) {
       console.error('Error al analizar partida activa:', err);
@@ -163,6 +215,7 @@ export const BuildAdvisor: React.FC<BuildAdvisorProps> = ({
 
   return (
     <div className="space-y-6 animate-fade-in">
+
       
       {/* Top Banner / Control Panel */}
       <div className="hextech-card rounded-lg p-6 border-2 border-hextech-gold/40 relative overflow-hidden bg-gradient-to-r from-hextech-dark via-hextech-navy to-hextech-blue shadow-2xl">
@@ -332,7 +385,41 @@ export const BuildAdvisor: React.FC<BuildAdvisorProps> = ({
 
       </div>
 
-      {/* Error Alert */}
+      {/* Knowledge Base Live Status & Force Sync Strip */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-hextech-dark/95 rounded-lg border border-hextech-gold/30 text-xs shadow-lg">
+        <div className="flex items-center gap-2.5">
+          <div className="p-1.5 rounded bg-hextech-gold/15 text-hextech-gold border border-hextech-gold/30">
+            <Database className="w-4 h-4 text-hextech-gold" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-cinzel text-hextech-gold font-bold">Base de Conocimiento LoL:</span>
+              <span className="font-mono text-emerald-400 font-bold bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/40 text-[10px]">
+                Parche {kbStatus.patch}
+              </span>
+            </div>
+            <span className="text-[11px] text-gray-400">
+              {kbStatus.itemCount} objetos y {kbStatus.runeCount} runas verificadas en Riot Data Dragon
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {kbSyncMessage && (
+            <span className="text-[11px] text-emerald-300 font-mono animate-fade-in">{kbSyncMessage}</span>
+          )}
+          <button
+            onClick={handleForceSyncKb}
+            disabled={isSyncingKb}
+            title="Forzar comprobación y sincronización de nuevos parches de Riot Data Dragon"
+            className="px-3.5 py-1.5 rounded bg-hextech-navy hover:bg-hextech-blue border border-hextech-gold/40 text-hextech-gold hover:text-white font-cinzel text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isSyncingKb ? 'animate-spin' : ''}`} />
+            <span>{isSyncingKb ? 'Sincronizando...' : 'Sincronizar Parche'}</span>
+          </button>
+        </div>
+      </div>
+
       {errorMessage && (
         <div className="p-4 rounded-lg bg-rose-950/80 border border-rose-500/50 text-rose-200 flex items-start gap-3 shadow-lg animate-fade-in">
           <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
@@ -448,28 +535,31 @@ export const BuildAdvisor: React.FC<BuildAdvisorProps> = ({
                 </div>
 
                 <div className="grid grid-cols-5 gap-2">
-                  {[activeGame.playerChampion, ...activeGame.allies].slice(0, 5).map((champ, idx) => (
-                    <div key={idx} className="flex flex-col items-center text-center group">
-                      <div className={`w-11 h-11 rounded border-2 overflow-hidden bg-hextech-black relative shadow ${
-                        champ.isPlayer ? 'border-hextech-gold shadow-hextech-gold' : 'border-blue-400/50'
-                      }`}>
-                        <img
-                          src={getChampionIconUrl(champ.championName)}
-                          alt={champ.championName}
-                          className="w-full h-full object-cover"
-                          onError={(e) => handleChampionImageError(e, champ.championName)}
-                        />
-                        {champ.isPlayer && (
-                          <span className="absolute bottom-0 inset-x-0 bg-hextech-gold text-[8px] font-bold text-black font-cinzel uppercase text-center">
-                            TÚ
-                          </span>
-                        )}
+                  {[activeGame.playerChampion, ...activeGame.allies].slice(0, 5).map((champ, idx) => {
+                    const resolvedName = resolveChampionInfo(champ.championName).name;
+                    return (
+                      <div key={idx} className="flex flex-col items-center text-center group">
+                        <div className={`w-11 h-11 rounded border-2 overflow-hidden bg-hextech-black relative shadow ${
+                          champ.isPlayer ? 'border-hextech-gold shadow-hextech-gold' : 'border-blue-400/50'
+                        }`}>
+                          <img
+                            src={getChampionIconUrl(champ.championName)}
+                            alt={resolvedName}
+                            className="w-full h-full object-cover"
+                            onError={(e) => handleChampionImageError(e, champ.championName)}
+                          />
+                          {champ.isPlayer && (
+                            <span className="absolute bottom-0 inset-x-0 bg-hextech-gold text-[8px] font-bold text-black font-cinzel uppercase text-center">
+                              TÚ
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-gray-300 truncate w-full mt-1 font-sans">
+                          {resolvedName}
+                        </span>
                       </div>
-                      <span className="text-[10px] text-gray-300 truncate w-full mt-1 font-sans">
-                        {champ.championName}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -483,21 +573,24 @@ export const BuildAdvisor: React.FC<BuildAdvisorProps> = ({
                 </div>
 
                 <div className="grid grid-cols-5 gap-2">
-                  {activeGame.enemies.map((champ, idx) => (
-                    <div key={idx} className="flex flex-col items-center text-center group">
-                      <div className="w-11 h-11 rounded border-2 border-rose-500/50 overflow-hidden bg-hextech-black relative shadow">
-                        <img
-                          src={getChampionIconUrl(champ.championName)}
-                          alt={champ.championName}
-                          className="w-full h-full object-cover"
-                          onError={(e) => handleChampionImageError(e, champ.championName)}
-                        />
+                  {activeGame.enemies.map((champ, idx) => {
+                    const resolvedName = resolveChampionInfo(champ.championName).name;
+                    return (
+                      <div key={idx} className="flex flex-col items-center text-center group">
+                        <div className="w-11 h-11 rounded border-2 border-rose-500/50 overflow-hidden bg-hextech-black relative shadow">
+                          <img
+                            src={getChampionIconUrl(champ.championName)}
+                            alt={resolvedName}
+                            className="w-full h-full object-cover"
+                            onError={(e) => handleChampionImageError(e, champ.championName)}
+                          />
+                        </div>
+                        <span className="text-[10px] text-rose-200 truncate w-full mt-1 font-sans">
+                          {resolvedName}
+                        </span>
                       </div>
-                      <span className="text-[10px] text-rose-200 truncate w-full mt-1 font-sans">
-                        {champ.championName}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -544,6 +637,103 @@ export const BuildAdvisor: React.FC<BuildAdvisorProps> = ({
               )}
             </div>
 
+          </div>
+
+          {/* EVIDENCE QUALITY & CONSULTED SOURCES CARD */}
+          <div className="p-4 rounded-lg bg-hextech-dark/95 border border-hextech-gold/35 shadow-xl space-y-3.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[11px] uppercase font-bold text-gray-400 font-cinzel">Calidad de Evidencia:</span>
+                <span className={`px-2.5 py-0.5 rounded text-xs font-bold font-mono border flex items-center gap-1.5 ${
+                  recommendation.confidenceLevel === 'HIGH'
+                    ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/50'
+                    : recommendation.confidenceLevel === 'MEDIUM'
+                    ? 'bg-amber-950/80 text-amber-300 border-amber-500/50'
+                    : 'bg-rose-950/80 text-rose-300 border-rose-500/50'
+                }`}>
+                  <span className={`w-2 h-2 rounded-full ${
+                    recommendation.confidenceLevel === 'HIGH' ? 'bg-emerald-400' :
+                    recommendation.confidenceLevel === 'MEDIUM' ? 'bg-amber-400' : 'bg-rose-400'
+                  }`} />
+                  {recommendation.confidenceLevel === 'HIGH' && 'ALTA CONFIANZA (Riot Data Dragon + Metajuego Consolidado)'}
+                  {recommendation.confidenceLevel === 'MEDIUM' && 'CONFIANZA MEDIA (Búsqueda Web + Muestra Parcial)'}
+                  {recommendation.confidenceLevel === 'LOW' && 'CONFIANZA LIMITADA (Parche Reciente o Muestra Reducida)'}
+                </span>
+
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-hextech-navy text-hextech-gold border border-hextech-gold/30">
+                  Parche Verificado: {recommendation.patch}
+                </span>
+              </div>
+
+              {/* Toggle Sources Drawer */}
+              {recommendation.traceability?.sources && recommendation.traceability.sources.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setIsSourcesOpen(!isSourcesOpen)}
+                  className="text-xs text-hextech-cyan hover:text-hextech-gold font-cinzel flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Globe className="w-3.5 h-3.5" />
+                  <span>Fuentes Consultadas ({recommendation.traceability.sources.length})</span>
+                  {isSourcesOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                </button>
+              )}
+            </div>
+
+            <p className="text-xs text-gray-300 leading-relaxed font-sans">
+              {recommendation.traceability?.evidenceQualityText || 'Recomendación adaptada verificada contra catálogo estructurado oficial de Riot Games.'}
+            </p>
+
+            {/* Warning if new patch or insufficient sample */}
+            {(recommendation.traceability?.isNewPatchWarning || recommendation.traceability?.isSampleInsufficient) && (
+              <div className="p-3 rounded bg-amber-950/60 border border-amber-500/40 text-amber-200 text-xs flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="font-cinzel text-amber-300 block mb-0.5">Aviso de Parche Reciente o Muestra Reducida:</strong>
+                  {recommendation.traceability?.sampleSize && recommendation.traceability.sampleSize < 500
+                    ? `Muestra analizada de ${recommendation.traceability.sampleSize} partidas. Al tratarse de un volumen reducido, el motor prioriza recetas y especificaciones oficiales para evitar builds anómalas.`
+                    : 'El metajuego para este parche se encuentra en evolución temprana. Se han contrastado los objetos directamente contra Riot Data Dragon para garantizar que ninguno haya sido eliminado.'}
+                </div>
+              </div>
+            )}
+
+            {/* Expandable Sources Drawer */}
+            {isSourcesOpen && recommendation.traceability?.sources && (
+              <div className="pt-3 border-t border-hextech-gold/20 space-y-2.5 animate-fade-in">
+                <span className="text-[11px] uppercase font-bold text-hextech-gold font-cinzel block">
+                  Páginas y Referencias Analizadas para esta Recomendación:
+                </span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {recommendation.traceability.sources.map((src, sIdx) => (
+                    <div key={src.id || sIdx} className="p-2.5 rounded bg-hextech-navy/70 border border-hextech-gold/20 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <a
+                          href={src.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-bold text-hextech-cyan hover:text-hextech-gold underline flex items-center gap-1 truncate max-w-[240px]"
+                        >
+                          <span>{src.name}</span>
+                          <ExternalLink className="w-3 h-3 shrink-0" />
+                        </a>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                          src.reliability === 'HIGH' ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/30' : 'bg-gray-800 text-gray-300'
+                        }`}>
+                          {src.reliability === 'HIGH' ? 'Oficial / Alta' : 'Media'}
+                        </span>
+                      </div>
+                      {src.excerpt && (
+                        <p className="text-[11px] text-gray-400 line-clamp-2 italic font-sans">
+                          "{src.excerpt}"
+                        </p>
+                      )}
+                      <div className="text-[10px] text-gray-500 font-mono">
+                        Parche: {src.patch} • Consulta: {new Date(src.timestamp).toLocaleTimeString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 2. RECOMMENDED BUILD SECTION */}
@@ -717,48 +907,69 @@ export const BuildAdvisor: React.FC<BuildAdvisorProps> = ({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-              {recommendation.situationalItems.map((sit, idx) => (
-                <div
-                  key={idx}
-                  className={`p-3.5 rounded-lg border transition-all space-y-2.5 ${
-                    sit.triggerMatched
-                      ? 'bg-hextech-navy/90 border-hextech-gold/60 shadow-md ring-1 ring-hextech-gold/30'
-                      : 'bg-hextech-dark/60 border-hextech-gold/15 opacity-80'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className={`text-[10px] font-bold font-cinzel uppercase px-2 py-0.5 rounded ${
-                      sit.triggerMatched
-                        ? 'bg-hextech-gold text-black'
-                        : 'bg-hextech-navy text-gray-400 border border-hextech-gold/20'
-                    }`}>
-                      {sit.triggerMatched ? 'Recomendado en esta partida' : 'Situación Potencial'}
-                    </span>
-                  </div>
+              {recommendation.situationalItems.map((sit, idx) => {
+                const isRecommendedMatch = sit.tier === 'RECOMMENDED_MATCH' || (sit.triggerMatched && sit.priority === 'HIGH');
+                const isAlternative = sit.tier === 'SITUATIONAL_ALTERNATIVE' || sit.priority === 'MEDIUM';
 
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded border border-hextech-gold/40 overflow-hidden bg-hextech-black shrink-0">
-                      <img
-                        src={getItemIconUrl(sit.id)}
-                        alt={sit.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="min-w-0">
-                      <span className="text-[10px] font-bold text-hextech-cyan block truncate">
-                        {sit.condition}
+                return (
+                  <div
+                    key={idx}
+                    className={`p-3.5 rounded-lg border transition-all space-y-2.5 ${
+                      isRecommendedMatch
+                        ? 'bg-hextech-navy/90 border-hextech-gold/60 shadow-md ring-1 ring-hextech-gold/30'
+                        : isAlternative
+                        ? 'bg-hextech-dark/80 border-cyan-500/40'
+                        : 'bg-hextech-dark/60 border-hextech-gold/15 opacity-80'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`text-[10px] font-bold font-cinzel uppercase px-2 py-0.5 rounded ${
+                        isRecommendedMatch
+                          ? 'bg-hextech-gold text-black shadow-sm font-black'
+                          : isAlternative
+                          ? 'bg-cyan-900/60 text-cyan-300 border border-cyan-500/30'
+                          : 'bg-hextech-navy text-gray-400 border border-hextech-gold/20'
+                      }`}>
+                        {isRecommendedMatch
+                          ? 'Recomendado para esta partida'
+                          : isAlternative
+                          ? 'Alternativa situacional'
+                          : 'Opción de baja prioridad'}
                       </span>
-                      <h4 className="text-xs font-bold text-gray-100 font-cinzel truncate">
-                        {sit.name}
-                      </h4>
                     </div>
-                  </div>
 
-                  <p className="text-[11px] text-gray-300 leading-snug">
-                    {sit.reason}
-                  </p>
-                </div>
-              ))}
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded border border-hextech-gold/40 overflow-hidden bg-hextech-black shrink-0">
+                        <img
+                          src={getItemIconUrl(sit.id)}
+                          alt={sit.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[10px] font-bold text-hextech-cyan block truncate">
+                          {sit.condition}
+                        </span>
+                        <h4 className="text-xs font-bold text-gray-100 font-cinzel truncate">
+                          {sit.name}
+                        </h4>
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] text-gray-300 leading-snug">
+                      {sit.reason}
+                    </p>
+
+                    {sit.championSynergy && (
+                      <div className="pt-2 border-t border-hextech-gold/15">
+                        <p className="text-[10px] text-hextech-gold/90 leading-tight">
+                          <span className="font-bold text-hextech-cyan">Sinergia con el campeón:</span> {sit.championSynergy}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
