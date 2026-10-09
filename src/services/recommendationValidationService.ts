@@ -71,7 +71,13 @@ export const validateBuildRecommendation = (
 
   // 2. VALIDATE BOOTS
   checkedItemsCount++;
-  if (!isValidItemInCurrentPatch(rec.boots.id)) {
+  if (rec.playerChampion === 'Cassiopeia' || rec.boots.id === 0) {
+    rec.boots = {
+      id: 0,
+      name: 'Gracia Serpentina (Pasiva)',
+      reason: 'Cassiopeia no puede comprar botas en la tienda; obtiene velocidad de movimiento por nivel.',
+    };
+  } else if (!isValidItemInCurrentPatch(rec.boots.id)) {
     errors.push(`Botas recomendadas #${rec.boots.id} inválidas en el parche actual. Sustituidas por Botas Jonias.`);
     replacedItems.push(`Botas: ${rec.boots.name} -> Botas Jonias`);
     rec.boots = {

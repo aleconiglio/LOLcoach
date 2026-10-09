@@ -313,6 +313,15 @@ export interface BuildRecommendationItem {
 export interface BuildRecommendation {
   patch: string;
   playerChampion: string;
+  sourceId?: 'OP_GG' | 'U_GG' | 'MOBALYTICS' | 'LEAGUE_OF_GRAPHS' | 'MOBAFIRE';
+  sourceName?: string;
+  sourceUrl?: string;
+  role?: RoleFilter;
+  fetchedAt?: number;
+  lastUpdatedDate?: string;
+  validationStatus?: 'VERIFIED_CURRENT_PATCH' | 'PROVISIONAL_PREVIOUS_PATCH' | 'UNVERIFIED';
+  isStandardBuild?: boolean;
+  laterItems?: Array<{ id: number; name: string; reason: string }>;
   confidenceLevel?: ConfidenceLevel;
   traceability?: BuildRecommendationTraceability;
   startingItem: {

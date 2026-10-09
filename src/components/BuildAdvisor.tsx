@@ -738,11 +738,37 @@ export const BuildAdvisor: React.FC<BuildAdvisorProps> = ({
 
           {/* 2. RECOMMENDED BUILD SECTION */}
           <div className="hextech-card rounded-lg p-5 border border-hextech-gold/30 shadow-xl space-y-6">
-            <div className="flex items-center gap-2 pb-3 border-b border-hextech-gold/20">
-              <Swords className="w-5 h-5 text-hextech-gold" />
-              <h3 className="font-cinzel font-bold text-hextech-gold text-base tracking-wider">
-                BUILD RECOMENDADA
-              </h3>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-hextech-gold/20">
+              <div className="flex items-center gap-2">
+                <Swords className="w-5 h-5 text-hextech-gold" />
+                <h3 className="font-cinzel font-bold text-hextech-gold text-base tracking-wider">
+                  BUILD RECOMENDADA
+                </h3>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-500/40">
+                  Build Estándar
+                </span>
+              </div>
+
+              {/* Specialized Source Attributions & Verification Link */}
+              {recommendation.sourceName && recommendation.sourceUrl && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[11px] text-gray-400 font-cinzel">Fuente Especializada:</span>
+                  <a
+                    href={recommendation.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-hextech-navy border border-hextech-gold/40 text-xs font-bold text-hextech-cyan hover:text-hextech-gold hover:border-hextech-gold transition-colors"
+                  >
+                    <span>{recommendation.sourceName}</span>
+                    <ExternalLink className="w-3.5 h-3.5 text-hextech-gold" />
+                  </a>
+                  {recommendation.lastUpdatedDate && (
+                    <span className="text-[10px] text-gray-400 font-mono">
+                      (Act: {recommendation.lastUpdatedDate} • Parche {recommendation.patch})
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
@@ -896,81 +922,87 @@ export const BuildAdvisor: React.FC<BuildAdvisorProps> = ({
 
           {/* 3. SITUATIONAL ITEMS */}
           <div className="hextech-card rounded-lg p-5 border border-hextech-gold/30 shadow-xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-hextech-gold/20">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-hextech-gold/20">
               <div className="flex items-center gap-2">
                 <Activity className="w-5 h-5 text-hextech-cyan" />
                 <h3 className="font-cinzel font-bold text-hextech-gold text-base tracking-wider">
-                  ITEMS SITUACIONALES SEGÚN EL RITMO DE LA PARTIDA
+                  ALTERNATIVAS SITUACIONALES RESPALDADAS
                 </h3>
               </div>
-              <span className="text-[11px] text-gray-400">Qué problema resuelve cada objeto y por qué</span>
+              <span className="text-[11px] text-gray-400 font-sans">
+                {recommendation.sourceName ? `Respaldadas por ${recommendation.sourceName}` : 'Evidencia verificada'}
+              </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-              {recommendation.situationalItems.map((sit, idx) => {
-                const isRecommendedMatch = sit.tier === 'RECOMMENDED_MATCH' || (sit.triggerMatched && sit.priority === 'HIGH');
-                const isAlternative = sit.tier === 'SITUATIONAL_ALTERNATIVE' || sit.priority === 'MEDIUM';
+            {recommendation.situationalItems.length === 0 ? (
+              <div className="p-4 rounded-lg bg-hextech-navy/40 border border-hextech-gold/15 text-center space-y-1">
+                <p className="text-xs text-gray-300 font-sans">
+                  No se identificaron alternativas situacionales con respaldo estadístico suficiente para esta composición enemiga.
+                </p>
+                <p className="text-[11px] text-gray-400 font-mono">
+                  Se recomienda mantener la secuencia de la Build Estándar sin desvíos.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                {recommendation.situationalItems.map((sit, idx) => {
+                  const isTriggered = sit.triggerMatched;
 
-                return (
-                  <div
-                    key={idx}
-                    className={`p-3.5 rounded-lg border transition-all space-y-2.5 ${
-                      isRecommendedMatch
-                        ? 'bg-hextech-navy/90 border-hextech-gold/60 shadow-md ring-1 ring-hextech-gold/30'
-                        : isAlternative
-                        ? 'bg-hextech-dark/80 border-cyan-500/40'
-                        : 'bg-hextech-dark/60 border-hextech-gold/15 opacity-80'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className={`text-[10px] font-bold font-cinzel uppercase px-2 py-0.5 rounded ${
-                        isRecommendedMatch
-                          ? 'bg-hextech-gold text-black shadow-sm font-black'
-                          : isAlternative
-                          ? 'bg-cyan-900/60 text-cyan-300 border border-cyan-500/30'
-                          : 'bg-hextech-navy text-gray-400 border border-hextech-gold/20'
-                      }`}>
-                        {isRecommendedMatch
-                          ? 'Recomendado para esta partida'
-                          : isAlternative
-                          ? 'Alternativa situacional'
-                          : 'Opción de baja prioridad'}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded border border-hextech-gold/40 overflow-hidden bg-hextech-black shrink-0">
-                        <img
-                          src={getItemIconUrl(sit.id)}
-                          alt={sit.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="min-w-0">
-                        <span className="text-[10px] font-bold text-hextech-cyan block truncate">
-                          {sit.condition}
+                  return (
+                    <div
+                      key={idx}
+                      className={`p-3.5 rounded-lg border transition-all space-y-2.5 ${
+                        isTriggered
+                          ? 'bg-hextech-navy/90 border-hextech-gold/60 shadow-md ring-1 ring-hextech-gold/30'
+                          : 'bg-hextech-dark/70 border-cyan-500/30'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`text-[10px] font-bold font-cinzel uppercase px-2 py-0.5 rounded ${
+                          isTriggered
+                            ? 'bg-hextech-gold text-black shadow-sm font-black'
+                            : 'bg-cyan-950/80 text-cyan-300 border border-cyan-500/30'
+                        }`}>
+                          {isTriggered
+                            ? 'Alternativa situacional (Respaldada)'
+                            : 'Variante de metajuego'}
                         </span>
-                        <h4 className="text-xs font-bold text-gray-100 font-cinzel truncate">
-                          {sit.name}
-                        </h4>
                       </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded border border-hextech-gold/40 overflow-hidden bg-hextech-black shrink-0">
+                          <img
+                            src={getItemIconUrl(sit.id)}
+                            alt={sit.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[10px] font-bold text-hextech-cyan block truncate">
+                            {sit.condition}
+                          </span>
+                          <h4 className="text-xs font-bold text-gray-100 font-cinzel truncate">
+                            {sit.name}
+                          </h4>
+                        </div>
+                      </div>
+
+                      <p className="text-[11px] text-gray-300 leading-snug">
+                        {sit.reason}
+                      </p>
+
+                      {sit.evidenceText && (
+                        <div className="pt-2 border-t border-hextech-gold/15">
+                          <p className="text-[10px] text-hextech-gold/90 leading-tight">
+                            <span className="font-bold text-hextech-cyan">Respaldo:</span> {sit.evidenceText}
+                          </p>
+                        </div>
+                      )}
                     </div>
-
-                    <p className="text-[11px] text-gray-300 leading-snug">
-                      {sit.reason}
-                    </p>
-
-                    {sit.championSynergy && (
-                      <div className="pt-2 border-t border-hextech-gold/15">
-                        <p className="text-[10px] text-hextech-gold/90 leading-tight">
-                          <span className="font-bold text-hextech-cyan">Sinergia con el campeón:</span> {sit.championSynergy}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* 4. RUNAS & HABILIDADES */}
